@@ -30,6 +30,8 @@ namespace PlatformFlower
                 app.UseSwaggerUI();
             }
 
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
