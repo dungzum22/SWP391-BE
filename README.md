@@ -8,61 +8,77 @@ This project provides a RESTful API for a flower shop e-commerce platform. It ha
 
 ## Technology Stack
 
-- **Framework**: ASP.NET Core 8.0- **ORM**: Entity Framework Core
-- **Database**: SQL Server- **API Documentation**: Swagger/OpenAPI
+- **Framework**: ASP.NET Core 8.0
+- **ORM**: Entity Framework Core
+- **Database**: SQL Server
+- **API Documentation**: Swagger/OpenAPI
 - **Authentication**: JWT-based authentication
 
 ## Features
 
-- User authentication and authorization- Product catalog management
-- Shopping cart functionality- Order processing
-- Payment integration- Admin dashboard
+- User authentication and authorization
+- Product catalog management
+- Shopping cart functionality
+- Order processing
+- Payment integration
+- Admin dashboard
 
 ## Getting Started
 
 ### Prerequisites
 
 - .NET 8.0 SDK
-- SQL Server- Visual Studio 2022 (recommended)
+- SQL Server
+- Visual Studio 2022 (recommended)
 
 ### Installation
 
 1. Clone the repository:
+
    ```
    git clone https://github.com/dungzum22/SWP391-BE.git
    ```
 2. Navigate to the project directory:
+
    ```
    cd SWP391-BE
    ```
 3. Restore dependencies:
+
    ```
    dotnet restore
    ```
 4. Update the database connection string in `PlatformFlower/appsettings.json` if needed:
+
    ```json
    "ConnectionStrings": {
      "DefaultConnection": "Data Source=(local);Initial Catalog=Flowershop;Persist Security Info=True;User ID=sa;Password=123;Encrypt=True;Trust Server Certificate=True"
    }
    ```
 5. Apply database migrations:
+
    ```
    dotnet ef database update
    ```
 6. Run the application:
+
    ```
    dotnet run --project PlatformFlower
    ```
 7. Access the API:
+
    - HTTP: http://localhost:5116
    - HTTPS: https://localhost:7274
    - Swagger UI: https://localhost:7274/swagger
 
 ## Project Structure
 
-- **PlatformFlower/**: Main project directory  - **Controllers/**: API endpoints
-  - **Models/**: Data models and DTOs  - **Services/**: Business logic implementation
-  - **Data/**: Database context and configurations  - **Middleware/**: Custom middleware components
+- **PlatformFlower/**: Main project directory
+  - **Controllers/**: API endpoints
+  - **Models/**: Data models and DTOs
+  - **Services/**: Business logic implementation
+  - **Data/**: Database context and configurations
+  - **Middleware/**: Custom middleware components
   - **Program.cs**: Application entry point and configuration
 
 ## API Documentation
@@ -71,34 +87,76 @@ API documentation is available through Swagger UI when running the application. 
 
 ## Database Schema
 
-The database includes the following main entities:- Users
+The database includes the following main entities:
 
-- Products- Categories
-- Orders- OrderItems
-- Carts- Payments
+- Users
+- Products
+- Categories
+- Orders
+- OrderItems
+- Carts
+- Payments
 
 ## Error Handling
 
 The application uses a global exception handler middleware to provide consistent error responses across all endpoints. API responses follow a standardized format:
 
 ```json
-{  "success": true/false,
-  "message": "Operation result message",  "data": { /* Response data */ },
-  "errors": { /* Error details if any */ }}
+{
+  "success": true/false,
+  "message": "Operation result message",
+  "data": { /* Response data */ },
+  "errors": { /* Error details if any */ }
+}
 ```
 
 ## Contributing
 
 Interested in contributing? Check out our [CONTRIBUTING.md](CONTRIBUTING.md) to find resources around contributing along with a guide on how to set up a development environment.
+
 Join our amazing community as a code contributor, and help accelerate!
 
-<!-- This section will automatically display contributors' GitHub avatars when hosted on GitHub -->
+<!-- Add individual contributors manually -->
 
-<a href="https://github.com/dungzum22/SWP391-BE/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=dungzum22/SWP391-BE" />
-</a>
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/dungzum22">
+        <img src="https://github.com/dungzum22.png" width="100px;" alt="dungzum22"/>
+        <br />
+        <sub><b>dungzum22</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/huynphgtr">
+        <img src="https://github.com/huynphgtr.png" width="100px;" alt="huynphgtr"/>
+        <br />
+        <sub><b>huynphgtr</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/MDuyn222">
+        <img src="https://github.com/MDuyn222.png" width="100px;" alt="MDuyn222"/>
+        <br />
+        <sub><b>MDuyn222</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/PTC1102">
+        <img src="https://github.com/PTC1102.png" width="100px;" alt="PTC1102"/>
+        <br />
+        <sub><b>PTC1102</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+<br>
+
 ## License
+
 This project is licensed under the MIT License - see the LICENSE file for details.
+
 ## Contact
 
 Project Link: [https://github.com/dungzum22/SWP391-BE](https://github.com/dungzum22/SWP391-BE)
