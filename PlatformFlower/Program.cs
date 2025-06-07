@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using PlatformFlower.Middleware;
 
 namespace PlatformFlower
 {
@@ -21,6 +22,12 @@ namespace PlatformFlower
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
+            // Register services for dependency injection
+            builder.Services.AddScoped<PlatformFlower.Services.Common.Response.IResponseService, PlatformFlower.Services.Common.Response.ResponseService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Common.Validation.IValidationService, PlatformFlower.Services.Common.Validation.ValidationService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Common.Logging.IAppLogger, PlatformFlower.Services.Common.Logging.AppLogger>();
+            builder.Services.AddScoped<PlatformFlower.Services.User.IUserService, PlatformFlower.Services.User.UserService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -30,7 +37,7 @@ namespace PlatformFlower
                 app.UseSwaggerUI();
             }
 
-            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+            // app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
             app.UseHttpsRedirection();
 

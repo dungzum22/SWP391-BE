@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using PlatformFlower.Models;
+using System.Text.RegularExpressions;
 
 namespace PlatformFlower.Services.Common.Validation
 {
@@ -26,7 +27,36 @@ namespace PlatformFlower.Services.Common.Validation
             return ApiResponse<T>.ErrorResult(message, errors);
         }
 
-        private Dictionary<string, IEnumerable<string>> ExtractModelStateErrors(ModelStateDictionary modelState)
+        public bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            var emailRegex = new Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+            return emailRegex.IsMatch(email);
+        }
+
+        public bool IsValidPassword(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+                return false;
+
+            // Password must be at least 6 characters long
+            // Can add more complex rules here (uppercase, lowercase, numbers, special chars)
+            return password.Length >= 6;
+        }
+
+        public bool IsValidUsername(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return false;
+
+            // Username must be 3-255 characters, alphanumeric and underscore only
+            var usernameRegex = new Regex(@"^[a-zA-Z0-9_]{3,255}$");
+            return usernameRegex.IsMatch(username);
+        }
+
+        private static Dictionary<string, IEnumerable<string>> ExtractModelStateErrors(ModelStateDictionary modelState)
         {
             return modelState
                 .Where(x => x.Value?.Errors.Count > 0)
