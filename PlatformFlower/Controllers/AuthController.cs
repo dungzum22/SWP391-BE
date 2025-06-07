@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
 using PlatformFlower.Models.DTOs;
@@ -130,11 +131,12 @@ namespace PlatformFlower.Controllers
         }
 
         /// <summary>
-        /// Get user by ID
+        /// Get user by ID (Protected - requires JWT token)
         /// </summary>
         /// <param name="id">User ID</param>
         /// <returns>User information</returns>
         [HttpGet("user/{id}")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetUser(int id)
         {
             try
@@ -157,6 +159,48 @@ namespace PlatformFlower.Controllers
                 _logger.LogError($"Error getting user by ID {id}: {ex.Message}", ex);
                 var response = _responseService.CreateErrorResponse<UserResponseDto>(
                     "An error occurred while retrieving user information"
+                );
+                return StatusCode(500, response);
+            }
+        }
+
+        /// <summary>
+        /// Get current user profile (Protected - requires JWT token)
+        /// </summary>
+        /// <returns>Current user information</returns>
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetCurrentUserProfile()
+        {
+            try
+            {
+                // Get user ID from JWT token claims
+                var userIdClaim = User.FindFirst("user_id")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    _logger.LogWarning("Invalid user ID in JWT token");
+                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponseDto>("Invalid token");
+                    return BadRequest(badRequestResponse);
+                }
+
+                _logger.LogInformation($"Getting profile for user ID: {userId}");
+
+                var user = await _userService.GetUserByIdAsync(userId);
+
+                if (user == null)
+                {
+                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponseDto>("User not found");
+                    return NotFound(notFoundResponse);
+                }
+
+                var response = _responseService.CreateSuccessResponse(user, "Profile retrieved successfully");
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting current user profile: {ex.Message}", ex);
+                var response = _responseService.CreateErrorResponse<UserResponseDto>(
+                    "An error occurred while retrieving profile information"
                 );
                 return StatusCode(500, response);
             }
