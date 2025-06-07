@@ -40,5 +40,15 @@ namespace PlatformFlower.Services.Common.Response
             var response = ApiResponse<T>.ErrorResult(message);
             return new ObjectResult(response) { StatusCode = 500 };
         }
+
+        public ApiResponse<T> CreateSuccessResponse<T>(T data, string message = "Operation completed successfully")
+        {
+            return ApiResponse<T>.SuccessResult(data, message);
+        }
+
+        public ApiResponse<T> CreateErrorResponse<T>(string message, object errors = null)
+        {
+            return ApiResponse<T>.ErrorResult(message, errors);
+        }
     }
 }
