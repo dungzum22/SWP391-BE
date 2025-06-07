@@ -5,11 +5,11 @@ namespace PlatformFlower.Services.User
     public interface IUserService
     {
         /// <summary>
-        /// Register a new user with optional user info
+        /// Register a new user and return auth response with JWT token
         /// </summary>
         /// <param name="registerDto">User registration data</param>
-        /// <returns>Created user information</returns>
-        Task<UserResponseDto> RegisterUserAsync(RegisterUserDto registerDto);
+        /// <returns>Auth response with user info and JWT token</returns>
+        Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto);
 
         /// <summary>
         /// Check if username already exists
