@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Entities;
 using PlatformFlower.Models.DTOs;
+using PlatformFlower.Services.Auth;
+using PlatformFlower.Services.Common.Configuration;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Validation;
 using System.Security.Cryptography;
@@ -13,18 +15,24 @@ namespace PlatformFlower.Services.User
         private readonly FlowershopContext _context;
         private readonly IValidationService _validationService;
         private readonly IAppLogger _logger;
+        private readonly IJwtService _jwtService;
+        private readonly IJwtConfiguration _jwtConfig;
 
         public UserService(
             FlowershopContext context,
             IValidationService validationService,
-            IAppLogger logger)
+            IAppLogger logger,
+            IJwtService jwtService,
+            IJwtConfiguration jwtConfig)
         {
             _context = context;
             _validationService = validationService;
             _logger = logger;
+            _jwtService = jwtService;
+            _jwtConfig = jwtConfig;
         }
 
-        public async Task<UserResponseDto> RegisterUserAsync(RegisterUserDto registerDto)
+        public async Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto)
         {
             try
             {
@@ -73,8 +81,23 @@ namespace PlatformFlower.Services.User
 
                 _logger.LogInformation($"UserInfo created successfully for user ID: {user.UserId}");
 
-                // Return response DTO
-                return MapToUserResponseDto(user, userInfo);
+                // Create user response DTO
+                var userResponseDto = MapToUserResponseDto(user, userInfo);
+
+                // Generate JWT token
+                var token = _jwtService.GenerateToken(userResponseDto);
+                var expirationMinutes = _jwtConfig.ExpirationMinutes;
+                var expiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
+                // Return auth response with token
+                return new AuthResponseDto
+                {
+                    User = userResponseDto,
+                    Token = token,
+                    TokenType = "Bearer",
+                    ExpiresAt = expiresAt,
+                    ExpiresInMinutes = expirationMinutes
+                };
             }
             catch (Exception ex)
             {

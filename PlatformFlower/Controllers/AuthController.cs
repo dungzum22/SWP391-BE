@@ -35,7 +35,7 @@ namespace PlatformFlower.Controllers
         /// <param name="registerDto">User registration data</param>
         /// <returns>Created user information</returns>
         [HttpPost("register")]
-        public async Task<ActionResult<ApiResponse<UserResponseDto>>> Register([FromBody] RegisterUserDto registerDto)
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Register([FromBody] RegisterUserDto registerDto)
         {
             try
             {
@@ -44,38 +44,38 @@ namespace PlatformFlower.Controllers
                 // Validate model state
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<UserResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<AuthResponseDto>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
                 // Call service to handle business logic
-                var userResponse = await _userService.RegisterUserAsync(registerDto!);
+                var authResponse = await _userService.RegisterUserAsync(registerDto!);
 
                 // Return success response
                 var response = _responseService.CreateSuccessResponse(
-                    userResponse,
-                    "User registered successfully"
+                    authResponse,
+                    "User registered successfully. You are now logged in."
                 );
 
-                _logger.LogInformation($"User registered successfully: {userResponse.Username}");
-                return CreatedAtAction(nameof(GetUser), new { id = userResponse.UserId }, response);
+                _logger.LogInformation($"User registered and logged in successfully: {authResponse.User.Username}");
+                return CreatedAtAction(nameof(GetUser), new { id = authResponse.User.UserId }, response);
             }
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning($"Registration failed - business rule violation: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<AuthResponseDto>(ex.Message);
                 return Conflict(response);
             }
             catch (ArgumentException ex)
             {
                 _logger.LogWarning($"Registration failed - invalid argument: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<AuthResponseDto>(ex.Message);
                 return BadRequest(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during registration: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(
+                var response = _responseService.CreateErrorResponse<AuthResponseDto>(
                     "An unexpected error occurred during registration"
                 );
                 return StatusCode(500, response);
