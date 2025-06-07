@@ -106,6 +106,74 @@ namespace PlatformFlower.Services.User
             }
         }
 
+        public async Task<AuthResponseDto> LoginUserAsync(LoginUserDto loginDto)
+        {
+            try
+            {
+                _logger.LogInformation($"Login attempt for username: {loginDto.Username}");
+
+                // Find user by username
+                var user = await _context.Users
+                    .Include(u => u.UserInfos)
+                    .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+
+                if (user == null)
+                {
+                    _logger.LogWarning($"Login failed - user not found: {loginDto.Username}");
+                    throw new UnauthorizedAccessException("Invalid username or password");
+                }
+
+                // Check if user is active
+                if (user.Status != "active")
+                {
+                    _logger.LogWarning($"Login failed - user account is not active: {loginDto.Username}");
+                    throw new UnauthorizedAccessException("Account is not active");
+                }
+
+                // Verify password
+                var hashedPassword = HashPassword(loginDto.Password);
+                if (user.Password != hashedPassword)
+                {
+                    _logger.LogWarning($"Login failed - invalid password for user: {loginDto.Username}");
+                    throw new UnauthorizedAccessException("Invalid username or password");
+                }
+
+                _logger.LogInformation($"User authenticated successfully: {loginDto.Username}");
+
+                // Create user response DTO
+                var userInfo = user.UserInfos.FirstOrDefault();
+                var userResponseDto = MapToUserResponseDto(user, userInfo);
+
+                // Generate JWT token
+                var token = _jwtService.GenerateToken(userResponseDto);
+                var expirationMinutes = _jwtConfig.ExpirationMinutes;
+                var expiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
+                // Return auth response with token
+                var authResponse = new AuthResponseDto
+                {
+                    User = userResponseDto,
+                    Token = token,
+                    TokenType = "Bearer",
+                    ExpiresAt = expiresAt,
+                    ExpiresInMinutes = expirationMinutes
+                };
+
+                _logger.LogInformation($"User logged in successfully: {loginDto.Username}");
+                return authResponse;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Re-throw authorization exceptions as-is
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during user login: {ex.Message}", ex);
+                throw;
+            }
+        }
+
         public async Task<bool> IsUsernameExistsAsync(string username)
         {
             return await _context.Users.AnyAsync(u => u.Username == username);
