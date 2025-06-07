@@ -12,6 +12,13 @@ namespace PlatformFlower.Services.User
         Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto);
 
         /// <summary>
+        /// Login user and return auth response with JWT token
+        /// </summary>
+        /// <param name="loginDto">User login data</param>
+        /// <returns>Auth response with user info and JWT token</returns>
+        Task<AuthResponseDto> LoginUserAsync(LoginUserDto loginDto);
+
+        /// <summary>
         /// Check if username already exists
         /// </summary>
         /// <param name="username">Username to check</param>

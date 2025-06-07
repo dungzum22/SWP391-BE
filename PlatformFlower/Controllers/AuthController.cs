@@ -83,6 +83,53 @@ namespace PlatformFlower.Controllers
         }
 
         /// <summary>
+        /// Login user
+        /// </summary>
+        /// <param name="loginDto">User login data</param>
+        /// <returns>Auth response with JWT token</returns>
+        [HttpPost("login")]
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginUserDto loginDto)
+        {
+            try
+            {
+                _logger.LogInformation($"Login attempt for username: {loginDto?.Username}");
+
+                // Validate model state
+                if (!ModelState.IsValid)
+                {
+                    var validationResponse = _validationService.ValidateModelState<AuthResponseDto>(ModelState);
+                    return BadRequest(validationResponse);
+                }
+
+                // Call service to handle business logic
+                var authResponse = await _userService.LoginUserAsync(loginDto!);
+
+                // Return success response
+                var response = _responseService.CreateSuccessResponse(
+                    authResponse,
+                    "Login successful"
+                );
+
+                _logger.LogInformation($"User logged in successfully: {authResponse.User.Username}");
+                return Ok(response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning($"Login failed - unauthorized: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<AuthResponseDto>(ex.Message);
+                return Unauthorized(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unexpected error during login: {ex.Message}", ex);
+                var response = _responseService.CreateErrorResponse<AuthResponseDto>(
+                    "An unexpected error occurred during login"
+                );
+                return StatusCode(500, response);
+            }
+        }
+
+        /// <summary>
         /// Get user by ID
         /// </summary>
         /// <param name="id">User ID</param>
