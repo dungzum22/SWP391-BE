@@ -96,6 +96,10 @@ namespace PlatformFlower
             builder.Services.AddScoped<PlatformFlower.Services.User.IUserService, PlatformFlower.Services.User.UserService>();
             builder.Services.AddScoped<PlatformFlower.Services.Auth.IJwtService, PlatformFlower.Services.Auth.JwtService>();
 
+            // Register Email services
+            builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
+            builder.Services.AddScoped<PlatformFlower.Services.Email.IEmailService, PlatformFlower.Services.Email.EmailService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
