@@ -5,6 +5,7 @@ using PlatformFlower.Services.Auth;
 using PlatformFlower.Services.Common.Configuration;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Validation;
+using PlatformFlower.Services.Email;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -17,19 +18,22 @@ namespace PlatformFlower.Services.User
         private readonly IAppLogger _logger;
         private readonly IJwtService _jwtService;
         private readonly IJwtConfiguration _jwtConfig;
+        private readonly IEmailService _emailService;
 
         public UserService(
             FlowershopContext context,
             IValidationService validationService,
             IAppLogger logger,
             IJwtService jwtService,
-            IJwtConfiguration jwtConfig)
+            IJwtConfiguration jwtConfig,
+            IEmailService emailService)
         {
             _context = context;
             _validationService = validationService;
             _logger = logger;
             _jwtService = jwtService;
             _jwtConfig = jwtConfig;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto)
@@ -88,6 +92,21 @@ namespace PlatformFlower.Services.User
                 var token = _jwtService.GenerateToken(userResponseDto);
                 var expirationMinutes = _jwtConfig.ExpirationMinutes;
                 var expiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
+                // Send welcome email (don't wait for it to complete to avoid blocking registration)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendWelcomeEmailAsync(user.Email, user.Username);
+                        _logger.LogInformation($"Welcome email sent successfully to {user.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError($"Failed to send welcome email to {user.Email}: {emailEx.Message}", emailEx);
+                        // Don't throw - email failure shouldn't affect registration
+                    }
+                });
 
                 // Return auth response with token
                 return new AuthResponseDto
