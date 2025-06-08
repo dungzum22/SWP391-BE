@@ -343,6 +343,12 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(255)
                 .HasColumnName("username");
+            entity.Property(e => e.ResetPasswordToken)
+                .HasMaxLength(255)
+                .HasColumnName("reset_password_token");
+            entity.Property(e => e.ResetPasswordTokenExpiry)
+                .HasColumnType("datetime")
+                .HasColumnName("reset_password_token_expiry");
         });
 
         modelBuilder.Entity<UserInfo>(entity =>
