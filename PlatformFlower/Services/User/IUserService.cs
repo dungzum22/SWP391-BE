@@ -66,5 +66,13 @@ namespace PlatformFlower.Services.User
         /// <param name="token">Reset token</param>
         /// <returns>True if token is valid, false otherwise</returns>
         Task<bool> ValidateResetTokenAsync(string token);
+
+        /// <summary>
+        /// Update user information including avatar upload
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="updateDto">Update data</param>
+        /// <returns>Updated user information</returns>
+        Task<UserResponseDto> UpdateUserInfoAsync(int userId, UpdateUserInfoDto updateDto);
     }
 }

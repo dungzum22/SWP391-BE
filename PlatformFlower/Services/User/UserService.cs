@@ -6,6 +6,7 @@ using PlatformFlower.Services.Common.Configuration;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Validation;
 using PlatformFlower.Services.Email;
+using PlatformFlower.Services.Storage;
 using System.Security.Cryptography;
 using System.Text;
 using BCrypt.Net;
@@ -20,6 +21,7 @@ namespace PlatformFlower.Services.User
         private readonly IJwtService _jwtService;
         private readonly IJwtConfiguration _jwtConfig;
         private readonly IEmailService _emailService;
+        private readonly IStorageService _storageService;
 
         public UserService(
             FlowershopContext context,
@@ -27,7 +29,8 @@ namespace PlatformFlower.Services.User
             IAppLogger logger,
             IJwtService jwtService,
             IJwtConfiguration jwtConfig,
-            IEmailService emailService)
+            IEmailService emailService,
+            IStorageService storageService)
         {
             _context = context;
             _validationService = validationService;
@@ -35,6 +38,7 @@ namespace PlatformFlower.Services.User
             _jwtService = jwtService;
             _jwtConfig = jwtConfig;
             _emailService = emailService;
+            _storageService = storageService;
         }
 
         public async Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto)
@@ -511,6 +515,92 @@ namespace PlatformFlower.Services.User
                     UpdatedDate = userInfo.UpdatedDate
                 } : null
             };
+        }
+
+        public async Task<UserResponseDto> UpdateUserInfoAsync(int userId, UpdateUserInfoDto updateDto)
+        {
+            try
+            {
+                _logger.LogInformation($"Updating user info for user ID: {userId}");
+
+                // Find user with UserInfo
+                var user = await _context.Users
+                    .Include(u => u.UserInfos)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    throw new ArgumentException("User not found");
+                }
+
+                // Get or create UserInfo
+                var userInfo = user.UserInfos.FirstOrDefault();
+                if (userInfo == null)
+                {
+                    userInfo = new UserInfo
+                    {
+                        UserId = userId,
+                        Points = 100,
+                        CreatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.UtcNow
+                    };
+                    _context.UserInfos.Add(userInfo);
+                }
+
+                // Handle avatar upload if provided
+                string? newAvatarUrl = null;
+                if (updateDto.Avatar != null)
+                {
+                    try
+                    {
+                        // Upload new avatar to S3
+                        newAvatarUrl = await _storageService.UploadFileAsync(updateDto.Avatar, "avatars");
+
+                        // Delete old avatar if exists
+                        if (!string.IsNullOrEmpty(userInfo.Avatar))
+                        {
+                            await _storageService.DeleteFileAsync(userInfo.Avatar);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Failed to upload avatar for user {userId}: {ex.Message}", ex);
+                        throw new InvalidOperationException("Failed to upload avatar. Please try again.");
+                    }
+                }
+
+                // Update UserInfo fields (only update non-null values)
+                if (updateDto.FullName != null)
+                    userInfo.FullName = updateDto.FullName;
+
+                if (updateDto.Address != null)
+                    userInfo.Address = updateDto.Address;
+
+                if (updateDto.BirthDate.HasValue)
+                    userInfo.BirthDate = updateDto.BirthDate.Value;
+
+                if (updateDto.Sex != null)
+                    userInfo.Sex = updateDto.Sex;
+
+                if (updateDto.IsSeller.HasValue)
+                    userInfo.IsSeller = updateDto.IsSeller.Value;
+
+                if (newAvatarUrl != null)
+                    userInfo.Avatar = newAvatarUrl;
+
+                userInfo.UpdatedDate = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"User info updated successfully for user ID: {userId}");
+
+                return MapToUserResponseDto(user, userInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error updating user info for user {userId}: {ex.Message}", ex);
+                throw;
+            }
         }
 
         #endregion
