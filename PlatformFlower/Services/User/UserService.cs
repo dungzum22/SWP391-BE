@@ -227,6 +227,164 @@ namespace PlatformFlower.Services.User
             return MapToUserResponseDto(user, userInfo);
         }
 
+        public async Task<ForgotPasswordResponseDto> ForgotPasswordAsync(string email)
+        {
+            try
+            {
+                _logger.LogInformation($"Password reset request for email: {email}");
+
+                // Find user by email
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    _logger.LogWarning($"Password reset failed - user not found for email: {email}");
+                    // Return success message even if user not found for security reasons
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = true,
+                        Message = "Nếu email này tồn tại trong hệ thống, bạn sẽ nhận được email hướng dẫn đặt lại mật khẩu."
+                    };
+                }
+
+                // Check if user is active
+                if (user.Status != "active")
+                {
+                    _logger.LogWarning($"Password reset failed - user account is not active: {email}");
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = false,
+                        Message = "Tài khoản không hoạt động. Vui lòng liên hệ hỗ trợ."
+                    };
+                }
+
+                // Generate reset token
+                var resetToken = GenerateResetToken();
+                var tokenExpiry = DateTime.UtcNow.AddMinutes(15); // Token expires in 15 minutes
+
+                // Update user with reset token
+                user.ResetPasswordToken = resetToken;
+                user.ResetPasswordTokenExpiry = tokenExpiry;
+
+                await _context.SaveChangesAsync();
+
+                // Send password reset email (don't wait for it to complete)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendPasswordResetEmailAsync(user.Email, resetToken, user.Username);
+                        _logger.LogInformation($"Password reset email sent successfully to {user.Email}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError($"Failed to send password reset email to {user.Email}: {emailEx.Message}", emailEx);
+                    }
+                });
+
+                _logger.LogInformation($"Password reset token generated successfully for user: {user.Username}");
+
+                return new ForgotPasswordResponseDto
+                {
+                    Success = true,
+                    Message = "Email hướng dẫn đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn."
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during password reset request: {ex.Message}", ex);
+                return new ForgotPasswordResponseDto
+                {
+                    Success = false,
+                    Message = "Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau."
+                };
+            }
+        }
+
+        public async Task<ForgotPasswordResponseDto> ResetPasswordAsync(ResetPasswordDto resetDto)
+        {
+            try
+            {
+                _logger.LogInformation($"Password reset attempt with token: {resetDto.Token}");
+
+                // Find user by reset token
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.ResetPasswordToken == resetDto.Token);
+                if (user == null)
+                {
+                    _logger.LogWarning($"Password reset failed - invalid token: {resetDto.Token}");
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = false,
+                        Message = "Mã xác thực không hợp lệ."
+                    };
+                }
+
+                // Check if token is expired
+                if (user.ResetPasswordTokenExpiry == null || user.ResetPasswordTokenExpiry < DateTime.UtcNow)
+                {
+                    _logger.LogWarning($"Password reset failed - token expired for user: {user.Username}");
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = false,
+                        Message = "Mã xác thực đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới."
+                    };
+                }
+
+                // Check if user is active
+                if (user.Status != "active")
+                {
+                    _logger.LogWarning($"Password reset failed - user account is not active: {user.Username}");
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = false,
+                        Message = "Tài khoản không hoạt động. Vui lòng liên hệ hỗ trợ."
+                    };
+                }
+
+                // Hash new password
+                var hashedPassword = HashPassword(resetDto.NewPassword);
+
+                // Update user password and clear reset token
+                user.Password = hashedPassword;
+                user.ResetPasswordToken = null;
+                user.ResetPasswordTokenExpiry = null;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Password reset successfully for user: {user.Username}");
+
+                return new ForgotPasswordResponseDto
+                {
+                    Success = true,
+                    Message = "Mật khẩu đã được đặt lại thành công. Bạn có thể đăng nhập với mật khẩu mới."
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during password reset: {ex.Message}", ex);
+                return new ForgotPasswordResponseDto
+                {
+                    Success = false,
+                    Message = "Đã xảy ra lỗi khi đặt lại mật khẩu. Vui lòng thử lại sau."
+                };
+            }
+        }
+
+        public async Task<bool> ValidateResetTokenAsync(string token)
+        {
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.ResetPasswordToken == token);
+                if (user == null) return false;
+
+                return user.ResetPasswordTokenExpiry != null && user.ResetPasswordTokenExpiry > DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error validating reset token: {ex.Message}", ex);
+                return false;
+            }
+        }
+
         #region Private Methods
 
         private async Task ValidateUserRegistrationAsync(RegisterUserDto registerDto)
@@ -260,6 +418,15 @@ namespace PlatformFlower.Services.User
             using var sha256 = SHA256.Create();
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToBase64String(hashedBytes);
+        }
+
+        private static string GenerateResetToken()
+        {
+            // Generate a secure random token
+            using var rng = RandomNumberGenerator.Create();
+            var tokenBytes = new byte[32];
+            rng.GetBytes(tokenBytes);
+            return Convert.ToBase64String(tokenBytes).Replace("+", "").Replace("/", "").Replace("=", "")[..8].ToUpper();
         }
 
 

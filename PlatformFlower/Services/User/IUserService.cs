@@ -45,5 +45,26 @@ namespace PlatformFlower.Services.User
         /// <param name="username">Username</param>
         /// <returns>User information or null if not found</returns>
         Task<UserResponseDto?> GetUserByUsernameAsync(string username);
+
+        /// <summary>
+        /// Send password reset email to user
+        /// </summary>
+        /// <param name="email">User email</param>
+        /// <returns>Response indicating success or failure</returns>
+        Task<ForgotPasswordResponseDto> ForgotPasswordAsync(string email);
+
+        /// <summary>
+        /// Reset user password using reset token
+        /// </summary>
+        /// <param name="resetDto">Reset password data</param>
+        /// <returns>Response indicating success or failure</returns>
+        Task<ForgotPasswordResponseDto> ResetPasswordAsync(ResetPasswordDto resetDto);
+
+        /// <summary>
+        /// Validate reset password token
+        /// </summary>
+        /// <param name="token">Reset token</param>
+        /// <returns>True if token is valid, false otherwise</returns>
+        Task<bool> ValidateResetTokenAsync(string token);
     }
 }
