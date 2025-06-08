@@ -11,15 +11,17 @@ GO
 USE Flowershop;
 GO
 
--- Bảng Users với username là unique
+-- Bảng Users với username là unique và các trường reset password
 CREATE TABLE Users (
     user_id INT IDENTITY(1,1) PRIMARY KEY,
     username NVARCHAR(255) NOT NULL UNIQUE,  -- Username phải là duy nhất
     password NVARCHAR(255) NOT NULL,
     email NVARCHAR(255) NOT NULL,
-    type NVARCHAR(20) NOT NULL,  
-    created_date DATETIME DEFAULT GETDATE(), 
+    type NVARCHAR(20) NOT NULL,
+    created_date DATETIME DEFAULT GETDATE(),
     status NVARCHAR(20) DEFAULT 'active',
+    reset_password_token NVARCHAR(255) NULL,  -- Token để reset password
+    reset_password_token_expiry DATETIME NULL,  -- Thời gian hết hạn của token
     CONSTRAINT chk_role CHECK (type IN ('admin', 'seller', 'user')),
     CONSTRAINT chk_status CHECK (status IN ('active', 'inactive'))
 );
@@ -124,11 +126,11 @@ GO
 CREATE TABLE Orders (
     order_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT,
-    phone_number NVARCHAR(20),  
+    phone_number NVARCHAR(20),
     payment_method NVARCHAR(50) NOT NULL,
     delivery_method NVARCHAR(255) NOT NULL,
     created_date DATETIME DEFAULT GETDATE(),
-    user_voucher_status_id INT,  
+    user_voucher_status_id INT,
     address_id INT,
     cart_id INT,
     status_payment NVARCHAR(20),
@@ -136,8 +138,7 @@ CREATE TABLE Orders (
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (user_voucher_status_id) REFERENCES User_Voucher_Status(user_voucher_status_id),
     FOREIGN KEY (address_id) REFERENCES Address(address_id),
-    FOREIGN KEY (cart_id) REFERENCES Cart(cart_id),
-
+    FOREIGN KEY (cart_id) REFERENCES Cart(cart_id)
 );
 GO
 
@@ -150,7 +151,7 @@ CREATE TABLE Orders_Detail (
     price DECIMAL(10, 2) NOT NULL,
     amount INT NOT NULL,
     user_voucher_status_id INT,
-    status NVARCHAR(20) DEFAULT 'pending',  
+    status NVARCHAR(20) DEFAULT 'pending',
     created_at DATETIME DEFAULT GETDATE(),
     address_id INT,
     delivery_method NVARCHAR(255) NOT NULL,
@@ -174,9 +175,11 @@ report_id INT IDENTITY(1,1) PRIMARY KEY,
     status NVARCHAR(20) DEFAULT 'pending',  -- Trạng thái xử lý báo cáo
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),  
-    FOREIGN KEY (flower_id) REFERENCES Flower_Info(flower_id), 
-    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id),  
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (flower_id) REFERENCES Flower_Info(flower_id),
+    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id),
     CONSTRAINT chk_report_status CHECK (status IN ('pending', 'resolved', 'dismissed'))  -- Ràng buộc trạng thái
 );
 GO
+
+PRINT 'Database Flowershop created successfully with password reset functionality!';
