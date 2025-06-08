@@ -8,6 +8,7 @@ using PlatformFlower.Services.Common.Validation;
 using PlatformFlower.Services.Email;
 using System.Security.Cryptography;
 using System.Text;
+using BCrypt.Net;
 
 namespace PlatformFlower.Services.User
 {
@@ -150,12 +151,14 @@ namespace PlatformFlower.Services.User
                 }
 
                 // Verify password
-                var hashedPassword = HashPassword(loginDto.Password);
-                if (user.Password != hashedPassword)
+                if (!VerifyPassword(loginDto.Password, user.Password))
                 {
                     _logger.LogWarning($"Login failed - invalid password for user: {loginDto.Username}");
                     throw new UnauthorizedAccessException("Invalid username or password");
                 }
+
+                // Auto-upgrade legacy SHA256 passwords to bcrypt
+                await UpgradePasswordIfNeeded(user, loginDto.Password);
 
                 _logger.LogInformation($"User authenticated successfully: {loginDto.Username}");
 
@@ -415,9 +418,62 @@ namespace PlatformFlower.Services.User
 
         private static string HashPassword(string password)
         {
-            using var sha256 = SHA256.Create();
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hashedBytes);
+            // Use bcrypt with work factor of 12 (recommended for 2024)
+            return BCrypt.Net.BCrypt.HashPassword(password, 12);
+        }
+
+        private static bool VerifyPassword(string password, string hashedPassword)
+        {
+            try
+            {
+                // First try bcrypt verification
+                return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+            }
+            catch (Exception)
+            {
+                // If bcrypt fails, try legacy SHA256 verification for backward compatibility
+                return VerifyLegacyPassword(password, hashedPassword);
+            }
+        }
+
+        private static bool VerifyLegacyPassword(string password, string hashedPassword)
+        {
+            try
+            {
+                using var sha256 = SHA256.Create();
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                var legacyHash = Convert.ToBase64String(hashedBytes);
+                return legacyHash == hashedPassword;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task UpgradePasswordIfNeeded(Entities.User user, string plainPassword)
+        {
+            try
+            {
+                // Check if password is already bcrypt (bcrypt hashes start with $2a$, $2b$, $2x$, or $2y$)
+                if (user.Password.StartsWith("$2"))
+                {
+                    return; // Already using bcrypt
+                }
+
+                // If we reach here, it's likely a legacy SHA256 password
+                // Upgrade to bcrypt
+                var newHashedPassword = HashPassword(plainPassword);
+                user.Password = newHashedPassword;
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Password upgraded to bcrypt for user: {user.Username}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to upgrade password for user {user.Username}: {ex.Message}", ex);
+                // Don't throw - password upgrade failure shouldn't prevent login
+            }
         }
 
         private static string GenerateResetToken()
