@@ -93,7 +93,10 @@ namespace PlatformFlower
             builder.Services.AddScoped<PlatformFlower.Services.Common.Response.IResponseService, PlatformFlower.Services.Common.Response.ResponseService>();
             builder.Services.AddScoped<PlatformFlower.Services.Common.Validation.IValidationService, PlatformFlower.Services.Common.Validation.ValidationService>();
             builder.Services.AddScoped<PlatformFlower.Services.Common.Logging.IAppLogger, PlatformFlower.Services.Common.Logging.AppLogger>();
-            builder.Services.AddScoped<PlatformFlower.Services.User.IUserService, PlatformFlower.Services.User.UserService>();
+            // Register User services (Clean & Simple architecture)
+            // Only 2 core services - no facade needed
+            builder.Services.AddScoped<PlatformFlower.Services.User.Auth.IAuthService, PlatformFlower.Services.User.Auth.AuthServiceSimple>();
+            builder.Services.AddScoped<PlatformFlower.Services.User.Profile.IProfileService, PlatformFlower.Services.User.Profile.ProfileServiceSimple>();
             builder.Services.AddScoped<PlatformFlower.Services.Auth.IJwtService, PlatformFlower.Services.Auth.JwtService>();
 
             // Register Email services

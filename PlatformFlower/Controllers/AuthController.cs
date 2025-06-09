@@ -5,7 +5,8 @@ using PlatformFlower.Models.DTOs;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
-using PlatformFlower.Services.User;
+using PlatformFlower.Services.User.Auth;
+using PlatformFlower.Services.User.Profile;
 
 namespace PlatformFlower.Controllers
 {
@@ -13,18 +14,21 @@ namespace PlatformFlower.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IAuthService _authService;
+        private readonly IProfileService _profileService;
         private readonly IResponseService _responseService;
         private readonly IValidationService _validationService;
         private readonly IAppLogger _logger;
 
         public AuthController(
-            IUserService userService,
+            IAuthService authService,
+            IProfileService profileService,
             IResponseService responseService,
             IValidationService validationService,
             IAppLogger logger)
         {
-            _userService = userService;
+            _authService = authService;
+            _profileService = profileService;
             _responseService = responseService;
             _validationService = validationService;
             _logger = logger;
@@ -50,7 +54,7 @@ namespace PlatformFlower.Controllers
                 }
 
                 // Call service to handle business logic
-                var authResponse = await _userService.RegisterUserAsync(registerDto!);
+                var authResponse = await _authService.RegisterUserAsync(registerDto!);
 
                 // Return success response
                 var response = _responseService.CreateSuccessResponse(
@@ -103,7 +107,7 @@ namespace PlatformFlower.Controllers
                 }
 
                 // Call service to handle business logic
-                var authResponse = await _userService.LoginUserAsync(loginDto!);
+                var authResponse = await _authService.LoginUserAsync(loginDto!);
 
                 // Return success response
                 var response = _responseService.CreateSuccessResponse(
@@ -143,7 +147,7 @@ namespace PlatformFlower.Controllers
             {
                 _logger.LogInformation($"Getting user by ID: {id}");
 
-                var user = await _userService.GetUserByIdAsync(id);
+                var user = await _profileService.GetUserByIdAsync(id);
                 
                 if (user == null)
                 {
@@ -185,7 +189,7 @@ namespace PlatformFlower.Controllers
 
                 _logger.LogInformation($"Getting profile for user ID: {userId}");
 
-                var user = await _userService.GetUserByIdAsync(userId);
+                var user = await _profileService.GetUserByIdAsync(userId);
 
                 if (user == null)
                 {
@@ -218,7 +222,7 @@ namespace PlatformFlower.Controllers
             {
                 _logger.LogInformation($"Checking username availability: {username}");
 
-                var exists = await _userService.IsUsernameExistsAsync(username);
+                var exists = await _authService.IsUsernameExistsAsync(username);
                 var isAvailable = !exists;
 
                 var response = _responseService.CreateSuccessResponse(
@@ -256,7 +260,7 @@ namespace PlatformFlower.Controllers
                     return BadRequest(badRequestResponse);
                 }
 
-                var exists = await _userService.IsEmailExistsAsync(email);
+                var exists = await _authService.IsEmailExistsAsync(email);
                 var isAvailable = !exists;
 
                 var response = _responseService.CreateSuccessResponse(
@@ -296,7 +300,7 @@ namespace PlatformFlower.Controllers
                 }
 
                 // Call service to handle business logic
-                var result = await _userService.ForgotPasswordAsync(forgotPasswordDto!.Email);
+                var result = await _authService.ForgotPasswordAsync(forgotPasswordDto!.Email);
 
                 // Return response
                 var response = _responseService.CreateSuccessResponse(result, result.Message);
@@ -332,7 +336,7 @@ namespace PlatformFlower.Controllers
                 }
 
                 // Call service to handle business logic
-                var result = await _userService.ResetPasswordAsync(resetPasswordDto!);
+                var result = await _authService.ResetPasswordAsync(resetPasswordDto!);
 
                 if (result.Success)
                 {
@@ -373,7 +377,7 @@ namespace PlatformFlower.Controllers
                     return BadRequest(badRequestResponse);
                 }
 
-                var isValid = await _userService.ValidateResetTokenAsync(token);
+                var isValid = await _authService.ValidateResetTokenAsync(token);
 
                 var response = _responseService.CreateSuccessResponse(
                     isValid,

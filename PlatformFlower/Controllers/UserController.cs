@@ -5,7 +5,7 @@ using PlatformFlower.Models.DTOs;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
-using PlatformFlower.Services.User;
+using PlatformFlower.Services.User.Profile;
 
 namespace PlatformFlower.Controllers
 {
@@ -14,18 +14,18 @@ namespace PlatformFlower.Controllers
     [Authorize] // All endpoints require authentication
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IProfileService _profileService;
         private readonly IResponseService _responseService;
         private readonly IValidationService _validationService;
         private readonly IAppLogger _logger;
 
         public UserController(
-            IUserService userService,
+            IProfileService profileService,
             IResponseService responseService,
             IValidationService validationService,
             IAppLogger logger)
         {
-            _userService = userService;
+            _profileService = profileService;
             _responseService = responseService;
             _validationService = validationService;
             _logger = logger;
@@ -62,7 +62,7 @@ namespace PlatformFlower.Controllers
                 }
 
                 // Call service to update user info
-                var updatedUser = await _userService.UpdateUserInfoAsync(userId, updateDto);
+                var updatedUser = await _profileService.UpdateUserInfoAsync(userId, updateDto);
 
                 // Return success response
                 var response = _responseService.CreateSuccessResponse(
@@ -115,7 +115,7 @@ namespace PlatformFlower.Controllers
 
                 _logger.LogInformation($"Getting profile for user ID: {userId}");
 
-                var user = await _userService.GetUserByIdAsync(userId);
+                var user = await _profileService.GetUserByIdAsync(userId);
                 
                 if (user == null)
                 {
