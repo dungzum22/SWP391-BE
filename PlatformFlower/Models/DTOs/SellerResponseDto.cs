@@ -1,0 +1,18 @@
+namespace PlatformFlower.Models.DTOs
+{
+    public class SellerResponseDto
+    {
+        public int SellerId { get; set; }
+        public int UserId { get; set; }
+        public string ShopName { get; set; } = null!;
+        public string AddressSeller { get; set; } = null!;
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public int? TotalProduct { get; set; }
+        public string Role { get; set; } = null!;
+        public string? Introduction { get; set; }
+        
+        // Include user information for convenience
+        public UserResponseDto? User { get; set; }
+    }
+}

@@ -99,6 +99,9 @@ namespace PlatformFlower
             builder.Services.AddScoped<PlatformFlower.Services.User.Profile.IProfileService, PlatformFlower.Services.User.Profile.ProfileServiceSimple>();
             builder.Services.AddScoped<PlatformFlower.Services.Auth.IJwtService, PlatformFlower.Services.Auth.JwtService>();
 
+            // Register Seller services
+            builder.Services.AddScoped<PlatformFlower.Services.Seller.ISellerService, PlatformFlower.Services.Seller.SellerServiceSimple>();
+
             // Register Email services
             builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
             builder.Services.AddScoped<PlatformFlower.Services.Email.IEmailService, PlatformFlower.Services.Email.EmailService>();
