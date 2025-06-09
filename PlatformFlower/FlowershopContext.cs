@@ -288,9 +288,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Introduction)
                 .HasColumnType("text")
                 .HasColumnName("introduction");
-            entity.Property(e => e.Quantity)
-                .HasDefaultValue(0)
-                .HasColumnName("quantity");
             entity.Property(e => e.Role)
                 .HasMaxLength(20)
                 .HasColumnName("role");
@@ -300,10 +297,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.TotalProduct)
                 .HasDefaultValue(0)
                 .HasColumnName("total_product");
-            entity.Property(e => e.Type)
-                .HasMaxLength(20)
-                .HasDefaultValue("seller")
-                .HasColumnName("type");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")

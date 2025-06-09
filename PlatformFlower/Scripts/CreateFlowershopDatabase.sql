@@ -31,14 +31,12 @@ CREATE TABLE Seller (
     seller_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
     shop_name NVARCHAR(255) NOT NULL,
-    address_seller NVARCHAR(255) NOT NULL,  -- Đảm bảo thuộc tính này tồn tại
-    type NVARCHAR(20) DEFAULT 'seller',
+    address_seller NVARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
     total_product INT DEFAULT 0,
     role NVARCHAR(20) NOT NULL CHECK (role IN ('individual', 'enterprise')),
     introduction TEXT,
-    quantity INT DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
