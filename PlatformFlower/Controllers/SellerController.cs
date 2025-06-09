@@ -11,7 +11,7 @@ namespace PlatformFlower.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // All endpoints require authentication
+    [Authorize]
     public class SellerController : ControllerBase
     {
         private readonly ISellerService _sellerService;
@@ -31,17 +31,11 @@ namespace PlatformFlower.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Register current user as a seller
-        /// </summary>
-        /// <param name="registerSellerDto">Seller registration data</param>
-        /// <returns>Seller information</returns>
         [HttpPost("register")]
         public async Task<ActionResult<ApiResponse<SellerResponseDto>>> RegisterSeller([FromBody] RegisterSellerDto registerSellerDto)
         {
             try
             {
-                // Get user ID from JWT token claims
                 var userIdClaim = User.FindFirst("user_id")?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
@@ -52,17 +46,14 @@ namespace PlatformFlower.Controllers
 
                 _logger.LogInformation($"Seller registration attempt for user ID: {userId}");
 
-                // Validate model state
                 if (!ModelState.IsValid)
                 {
                     var validationResponse = _validationService.ValidateModelState<SellerResponseDto>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
-                // Call service to handle business logic
                 var sellerResponse = await _sellerService.RegisterSellerAsync(userId, registerSellerDto);
 
-                // Return success response
                 var response = _responseService.CreateSuccessResponse(
                     sellerResponse,
                     "Seller registration successful. You are now a seller!"
@@ -87,16 +78,11 @@ namespace PlatformFlower.Controllers
             }
         }
 
-        /// <summary>
-        /// Get current user's seller profile
-        /// </summary>
-        /// <returns>Seller information</returns>
         [HttpGet("profile")]
         public async Task<ActionResult<ApiResponse<SellerResponseDto>>> GetSellerProfile()
         {
             try
             {
-                // Get user ID from JWT token claims
                 var userIdClaim = User.FindFirst("user_id")?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
@@ -108,7 +94,7 @@ namespace PlatformFlower.Controllers
                 _logger.LogInformation($"Getting seller profile for user ID: {userId}");
 
                 var seller = await _sellerService.GetSellerByUserIdAsync(userId);
-                
+
                 if (seller == null)
                 {
                     var notFoundResponse = _responseService.CreateErrorResponse<SellerResponseDto>("Seller profile not found. Please register as a seller first.");
@@ -128,13 +114,8 @@ namespace PlatformFlower.Controllers
             }
         }
 
-        /// <summary>
-        /// Get seller by ID (public endpoint for viewing seller info)
-        /// </summary>
-        /// <param name="id">Seller ID</param>
-        /// <returns>Seller information</returns>
         [HttpGet("{id}")]
-        [AllowAnonymous] // Public endpoint
+        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<SellerResponseDto>>> GetSellerById(int id)
         {
             try
@@ -162,16 +143,11 @@ namespace PlatformFlower.Controllers
             }
         }
 
-        /// <summary>
-        /// Check if current user is a seller
-        /// </summary>
-        /// <returns>Boolean indicating if user is a seller</returns>
         [HttpGet("check-status")]
         public async Task<ActionResult<ApiResponse<bool>>> CheckSellerStatus()
         {
             try
             {
-                // Get user ID from JWT token claims
                 var userIdClaim = User.FindFirst("user_id")?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
@@ -183,8 +159,8 @@ namespace PlatformFlower.Controllers
                 _logger.LogInformation($"Checking seller status for user ID: {userId}");
 
                 var isSeller = await _sellerService.IsUserSellerAsync(userId);
-                
-                var response = _responseService.CreateSuccessResponse(isSeller, 
+
+                var response = _responseService.CreateSuccessResponse(isSeller,
                     isSeller ? "User is a seller" : "User is not a seller");
                 return Ok(response);
             }
