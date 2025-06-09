@@ -33,8 +33,10 @@ namespace PlatformFlower.Controllers
 
         /// <summary>
         /// Update current user's information including avatar upload
+        /// SECURITY NOTE: This endpoint only allows updating UserInfo fields.
+        /// User.Type (role) cannot be changed via this endpoint - admin-only functionality.
         /// </summary>
-        /// <param name="updateDto">Update data</param>
+        /// <param name="updateDto">Update data (UserInfo fields only)</param>
         /// <returns>Updated user information</returns>
         [HttpPut("profile")]
         public async Task<ActionResult<ApiResponse<UserResponseDto>>> UpdateProfile([FromForm] UpdateUserInfoDto updateDto)
