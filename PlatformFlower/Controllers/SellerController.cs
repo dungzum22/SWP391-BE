@@ -5,7 +5,7 @@ using PlatformFlower.Models.DTOs;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
-using PlatformFlower.Services.Seller;
+using PlatformFlower.Services.Seller.Profile;
 
 namespace PlatformFlower.Controllers
 {
@@ -14,13 +14,13 @@ namespace PlatformFlower.Controllers
     [Authorize]
     public class SellerController : ControllerBase
     {
-        private readonly ISellerService _sellerService;
+        private readonly ISellerProfileService _sellerService;
         private readonly IResponseService _responseService;
         private readonly IValidationService _validationService;
         private readonly IAppLogger _logger;
 
         public SellerController(
-            ISellerService sellerService,
+            ISellerProfileService sellerService,
             IResponseService responseService,
             IValidationService validationService,
             IAppLogger logger)
