@@ -1,8 +1,8 @@
 using PlatformFlower.Models.DTOs;
 
-namespace PlatformFlower.Services.Seller
+namespace PlatformFlower.Services.Seller.Profile
 {
-    public interface ISellerService
+    public interface ISellerProfileService
     {
         Task<SellerResponseDto> UpsertSellerAsync(int userId, UpdateSellerDto sellerDto);
         Task<SellerResponseDto?> GetSellerByUserIdAsync(int userId);

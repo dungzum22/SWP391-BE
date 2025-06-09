@@ -3,15 +3,15 @@ using PlatformFlower.Models.DTOs;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.User.Profile;
 
-namespace PlatformFlower.Services.Seller
+namespace PlatformFlower.Services.Seller.Profile
 {
-    public class SellerServiceSimple : ISellerService
+    public class SellerProfileService : ISellerProfileService
     {
         private readonly FlowershopContext _context;
         private readonly IProfileService _profileService;
         private readonly IAppLogger _logger;
 
-        public SellerServiceSimple(
+        public SellerProfileService(
             FlowershopContext context,
             IProfileService profileService,
             IAppLogger logger)
