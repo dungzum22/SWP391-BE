@@ -31,8 +31,8 @@ namespace PlatformFlower.Controllers
             _logger = logger;
         }
 
-        [HttpPost("register")]
-        public async Task<ActionResult<ApiResponse<SellerResponseDto>>> RegisterSeller([FromBody] RegisterSellerDto registerSellerDto)
+        [HttpPut("profile")]
+        public async Task<ActionResult<ApiResponse<SellerResponseDto>>> UpsertSellerProfile([FromBody] UpdateSellerDto sellerDto)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace PlatformFlower.Controllers
                     return BadRequest(badRequestResponse);
                 }
 
-                _logger.LogInformation($"Seller registration attempt for user ID: {userId}");
+                _logger.LogInformation($"Seller profile upsert attempt for user ID: {userId}");
 
                 if (!ModelState.IsValid)
                 {
@@ -52,27 +52,29 @@ namespace PlatformFlower.Controllers
                     return BadRequest(validationResponse);
                 }
 
-                var sellerResponse = await _sellerService.RegisterSellerAsync(userId, registerSellerDto);
+                var isExistingSeller = await _sellerService.IsUserSellerAsync(userId);
+                var sellerResponse = await _sellerService.UpsertSellerAsync(userId, sellerDto);
 
-                var response = _responseService.CreateSuccessResponse(
-                    sellerResponse,
-                    "Seller registration successful. You are now a seller!"
-                );
+                var message = isExistingSeller
+                    ? "Seller profile updated successfully!"
+                    : "Seller registration successful. You are now a seller!";
 
-                _logger.LogInformation($"Seller registered successfully for user ID: {userId}, seller ID: {sellerResponse.SellerId}");
-                return CreatedAtAction(nameof(GetSellerProfile), new { id = sellerResponse.SellerId }, response);
+                var response = _responseService.CreateSuccessResponse(sellerResponse, message);
+
+                _logger.LogInformation($"Seller profile upserted successfully for user ID: {userId}, seller ID: {sellerResponse.SellerId}");
+                return Ok(response);
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning($"Seller registration failed - business rule violation: {ex.Message}");
+                _logger.LogWarning($"Seller profile upsert failed - business rule violation: {ex.Message}");
                 var response = _responseService.CreateErrorResponse<SellerResponseDto>(ex.Message);
                 return Conflict(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unexpected error during seller registration: {ex.Message}", ex);
+                _logger.LogError($"Unexpected error during seller profile upsert: {ex.Message}", ex);
                 var response = _responseService.CreateErrorResponse<SellerResponseDto>(
-                    "An unexpected error occurred during seller registration"
+                    "An unexpected error occurred during seller profile operation"
                 );
                 return StatusCode(500, response);
             }

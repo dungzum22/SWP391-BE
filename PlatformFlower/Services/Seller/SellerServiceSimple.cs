@@ -21,56 +21,32 @@ namespace PlatformFlower.Services.Seller
             _logger = logger;
         }
 
-        public async Task<SellerResponseDto> RegisterSellerAsync(int userId, RegisterSellerDto registerSellerDto)
+        public async Task<SellerResponseDto> UpsertSellerAsync(int userId, UpdateSellerDto sellerDto)
         {
             try
             {
-                _logger.LogInformation($"Starting seller registration for user ID: {userId}");
+                _logger.LogInformation($"Starting seller upsert for user ID: {userId}");
 
-                await ValidateSellerRegistrationAsync(userId, registerSellerDto);
-
-                using var transaction = await _context.Database.BeginTransactionAsync();
-
-                try
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
                 {
-                    var user = await _context.Users.FindAsync(userId);
-                    if (user == null)
-                    {
-                        throw new InvalidOperationException("User not found");
-                    }
-
-                    user.Type = "seller";
-                    _context.Users.Update(user);
-
-                    var seller = new Entities.Seller
-                    {
-                        UserId = userId,
-                        ShopName = registerSellerDto.ShopName,
-                        AddressSeller = registerSellerDto.AddressSeller,
-                        Role = registerSellerDto.Role,
-                        Introduction = registerSellerDto.Introduction,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        TotalProduct = 0
-                    };
-
-                    _context.Sellers.Add(seller);
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    _logger.LogInformation($"Seller registered successfully for user ID: {userId}, seller ID: {seller.SellerId}");
-
-                    return await MapToSellerResponseDto(seller);
+                    throw new InvalidOperationException("User not found");
                 }
-                catch
+
+                var existingSeller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+
+                if (existingSeller == null)
                 {
-                    await transaction.RollbackAsync();
-                    throw;
+                    return await CreateNewSellerAsync(user, sellerDto);
+                }
+                else
+                {
+                    return await UpdateExistingSellerAsync(existingSeller, sellerDto);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error during seller registration for user ID {userId}: {ex.Message}", ex);
+                _logger.LogError($"Error during seller upsert for user ID {userId}: {ex.Message}", ex);
                 throw;
             }
         }
@@ -100,28 +76,83 @@ namespace PlatformFlower.Services.Seller
             return await _context.Sellers.AnyAsync(s => s.UserId == userId);
         }
 
-        private async Task ValidateSellerRegistrationAsync(int userId, RegisterSellerDto registerSellerDto)
+        private async Task<SellerResponseDto> CreateNewSellerAsync(Entities.User user, UpdateSellerDto sellerDto)
         {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
+            _logger.LogInformation($"Creating new seller for user ID: {user.UserId}");
+
+            await ValidateShopNameAsync(null, sellerDto.ShopName);
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                throw new InvalidOperationException("User not found");
+                user.Type = "seller";
+                _context.Users.Update(user);
+
+                var seller = new Entities.Seller
+                {
+                    UserId = user.UserId,
+                    ShopName = sellerDto.ShopName,
+                    AddressSeller = sellerDto.AddressSeller,
+                    Role = sellerDto.Role,
+                    Introduction = sellerDto.Introduction,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    TotalProduct = 0
+                };
+
+                _context.Sellers.Add(seller);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation($"New seller created successfully for user ID: {user.UserId}, seller ID: {seller.SellerId}");
+
+                return await MapToSellerResponseDto(seller);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        private async Task<SellerResponseDto> UpdateExistingSellerAsync(Entities.Seller seller, UpdateSellerDto sellerDto)
+        {
+            _logger.LogInformation($"Updating existing seller for user ID: {seller.UserId}");
+
+            await ValidateShopNameAsync(seller.SellerId, sellerDto.ShopName);
+
+            seller.ShopName = sellerDto.ShopName;
+            seller.AddressSeller = sellerDto.AddressSeller;
+            seller.Role = sellerDto.Role;
+            seller.Introduction = sellerDto.Introduction;
+            seller.UpdatedAt = DateTime.UtcNow;
+
+            _context.Sellers.Update(seller);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Seller updated successfully for user ID: {seller.UserId}, seller ID: {seller.SellerId}");
+
+            return await MapToSellerResponseDto(seller);
+        }
+
+        private async Task ValidateShopNameAsync(int? sellerId, string shopName)
+        {
+            var query = _context.Sellers.Where(s => s.ShopName.ToLower() == shopName.ToLower());
+
+            if (sellerId.HasValue)
+            {
+                query = query.Where(s => s.SellerId != sellerId.Value);
             }
 
-            if (await IsUserSellerAsync(userId))
-            {
-                throw new InvalidOperationException("User is already registered as a seller");
-            }
-
-            var existingShop = await _context.Sellers
-                .FirstOrDefaultAsync(s => s.ShopName.ToLower() == registerSellerDto.ShopName.ToLower());
+            var existingShop = await query.FirstOrDefaultAsync();
 
             if (existingShop != null)
             {
                 throw new InvalidOperationException("Shop name is already taken");
             }
 
-            _logger.LogInformation($"Seller registration validation passed for user ID: {userId}");
+            _logger.LogInformation($"Shop name validation passed for: {shopName}");
         }
 
         private async Task<SellerResponseDto> MapToSellerResponseDto(Entities.Seller seller)
