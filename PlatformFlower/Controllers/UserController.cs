@@ -135,31 +135,31 @@ namespace PlatformFlower.Controllers
         }
 
         /// <summary>
-        /// Test AWS S3 connection (Development only)
+        /// Test Cloudinary connection (Development only)
         /// </summary>
-        /// <returns>AWS connection status</returns>
-        [HttpGet("test-aws-config")]
-        public ActionResult<ApiResponse<object>> TestAwsConfig()
+        /// <returns>Cloudinary connection status</returns>
+        [HttpGet("test-cloudinary-config")]
+        public ActionResult<ApiResponse<object>> TestCloudinaryConfig()
         {
             try
             {
-                var awsInfo = new
+                var cloudinaryInfo = new
                 {
-                    BucketConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
-                        .GetService<PlatformFlower.Services.Common.Configuration.IAwsConfiguration>()?.BucketName),
-                    RegionConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
-                        .GetService<PlatformFlower.Services.Common.Configuration.IAwsConfiguration>()?.Region),
-                    AccessKeyConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
-                        .GetService<PlatformFlower.Services.Common.Configuration.IAwsConfiguration>()?.AccessKey)
+                    CloudNameConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
+                        .GetService<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration>()?.CloudName),
+                    ApiKeyConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
+                        .GetService<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration>()?.ApiKey),
+                    ApiSecretConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
+                        .GetService<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration>()?.ApiSecret)
                 };
 
-                var response = _responseService.CreateSuccessResponse(awsInfo, "AWS configuration check");
+                var response = _responseService.CreateSuccessResponse(cloudinaryInfo, "Cloudinary configuration check");
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"AWS config test failed: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<object>($"AWS config test failed: {ex.Message}");
+                _logger.LogError($"Cloudinary config test failed: {ex.Message}", ex);
+                var response = _responseService.CreateErrorResponse<object>($"Cloudinary config test failed: {ex.Message}");
                 return StatusCode(500, response);
             }
         }
