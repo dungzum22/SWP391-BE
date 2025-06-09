@@ -7,6 +7,7 @@ using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Validation;
 using PlatformFlower.Services.Email;
 using PlatformFlower.Services.Storage;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using BCrypt.Net;
@@ -394,6 +395,29 @@ namespace PlatformFlower.Services.User
 
         #region Private Methods
 
+        private static void ValidateProfileUpdateSecurity(UpdateUserInfoDto updateDto)
+        {
+            // SECURITY CHECK: Ensure no attempts to modify restricted fields
+            // This method serves as a security checkpoint to prevent privilege escalation
+
+            // Note: UpdateUserInfoDto should never contain User.Type, User.Status, or other sensitive fields
+            // If someone tries to add these fields to the DTO, this validation will catch it
+
+            // Additional security: Check if any reflection-based attacks are attempted
+            var dtoType = updateDto.GetType();
+            var properties = dtoType.GetProperties();
+
+            var restrictedProperties = new[] { "Type", "Role", "Status", "UserId", "Password" };
+
+            foreach (var prop in properties)
+            {
+                if (restrictedProperties.Contains(prop.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    throw new SecurityException($"Attempt to modify restricted property: {prop.Name}");
+                }
+            }
+        }
+
         private async Task ValidateUserRegistrationAsync(RegisterUserDto registerDto)
         {
             // Check if username already exists
@@ -532,6 +556,13 @@ namespace PlatformFlower.Services.User
                 {
                     throw new ArgumentException("User not found");
                 }
+
+                // SECURITY: This method only updates UserInfo, NOT User.Type/Role
+                // User role/type changes must be handled by admin-only endpoints
+                _logger.LogInformation($"Updating profile for user: {user.Username}, Type: {user.Type} (role cannot be changed via this endpoint)");
+
+                // SECURITY VALIDATION: Ensure no attempts to modify restricted fields
+                ValidateProfileUpdateSecurity(updateDto);
 
                 // Get or create UserInfo
                 var userInfo = user.UserInfos.FirstOrDefault();
