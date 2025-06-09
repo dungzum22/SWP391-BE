@@ -1,5 +1,4 @@
 
-using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -101,18 +100,9 @@ namespace PlatformFlower
             builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
             builder.Services.AddScoped<PlatformFlower.Services.Email.IEmailService, PlatformFlower.Services.Email.EmailService>();
 
-            // Register AWS services
-            builder.Services.AddSingleton<PlatformFlower.Services.Common.Configuration.IAwsConfiguration, PlatformFlower.Services.Common.Configuration.AwsConfiguration>();
-            builder.Services.AddScoped<IAmazonS3>(provider =>
-            {
-                var awsConfig = provider.GetRequiredService<PlatformFlower.Services.Common.Configuration.IAwsConfiguration>();
-                var config = new Amazon.S3.AmazonS3Config
-                {
-                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(awsConfig.Region)
-                };
-                return new Amazon.S3.AmazonS3Client(awsConfig.AccessKey, awsConfig.SecretKey, config);
-            });
-            builder.Services.AddScoped<PlatformFlower.Services.Storage.IStorageService, PlatformFlower.Services.Storage.S3StorageService>();
+            // Register Cloudinary services
+            builder.Services.AddSingleton<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration, PlatformFlower.Services.Common.Configuration.CloudinaryConfiguration>();
+            builder.Services.AddScoped<PlatformFlower.Services.Storage.IStorageService, PlatformFlower.Services.Storage.CloudinaryStorageService>();
 
             var app = builder.Build();
 
