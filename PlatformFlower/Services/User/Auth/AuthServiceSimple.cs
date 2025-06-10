@@ -136,6 +136,18 @@ namespace PlatformFlower.Services.User.Auth
                     };
                 }
 
+                // Check if user account is active - SECURITY: Don't allow password reset for inactive users
+                if (user.Status != "active")
+                {
+                    _logger.LogWarning($"Password reset denied - account is inactive: {user.Username}");
+                    // Return same message for security - don't reveal account status
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = true,
+                        Message = "If email exists, you will receive reset instructions."
+                    };
+                }
+
                 var resetToken = GenerateResetToken();
                 user.ResetPasswordToken = resetToken;
                 user.ResetPasswordTokenExpiry = DateTime.UtcNow.AddHours(1);
@@ -184,6 +196,17 @@ namespace PlatformFlower.Services.User.Auth
                     };
                 }
 
+                // SECURITY: Check if user account is active before allowing password reset
+                if (user.Status != "active")
+                {
+                    _logger.LogWarning($"Password reset denied - account is inactive: {user.Username}");
+                    return new ForgotPasswordResponseDto
+                    {
+                        Success = false,
+                        Message = "Account is not active. Please contact support."
+                    };
+                }
+
                 user.Password = HashPassword(resetDto.NewPassword);
                 user.ResetPasswordToken = null;
                 user.ResetPasswordTokenExpiry = null;
@@ -212,7 +235,10 @@ namespace PlatformFlower.Services.User.Auth
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.ResetPasswordToken == token);
-                return user != null && user.ResetPasswordTokenExpiry > DateTime.UtcNow;
+                // SECURITY: Token is only valid if user exists, token not expired, AND account is active
+                return user != null &&
+                       user.ResetPasswordTokenExpiry > DateTime.UtcNow &&
+                       user.Status == "active";
             }
             catch
             {
