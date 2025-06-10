@@ -59,7 +59,11 @@ GO
 -- Bảng Category cho các loại hoa
 CREATE TABLE Category (
     category_id INT IDENTITY(1,1) PRIMARY KEY,
-    category_name NVARCHAR(255) NOT NULL
+    category_name NVARCHAR(255) NOT NULL,
+    status NVARCHAR(20) DEFAULT 'active',
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT chk_category_status CHECK (status IN ('active', 'inactive'))
 );
 GO
 
