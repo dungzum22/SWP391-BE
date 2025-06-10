@@ -92,6 +92,18 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.CategoryName)
                 .HasMaxLength(255)
                 .HasColumnName("category_name");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<FlowerInfo>(entity =>
@@ -288,9 +300,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Introduction)
                 .HasColumnType("text")
                 .HasColumnName("introduction");
-            entity.Property(e => e.Quantity)
-                .HasDefaultValue(0)
-                .HasColumnName("quantity");
             entity.Property(e => e.Role)
                 .HasMaxLength(20)
                 .HasColumnName("role");
@@ -300,10 +309,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.TotalProduct)
                 .HasDefaultValue(0)
                 .HasColumnName("total_product");
-            entity.Property(e => e.Type)
-                .HasMaxLength(20)
-                .HasDefaultValue("seller")
-                .HasColumnName("type");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -343,6 +348,12 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(255)
                 .HasColumnName("username");
+            entity.Property(e => e.ResetPasswordToken)
+                .HasMaxLength(255)
+                .HasColumnName("reset_password_token");
+            entity.Property(e => e.ResetPasswordTokenExpiry)
+                .HasColumnType("datetime")
+                .HasColumnName("reset_password_token_expiry");
         });
 
         modelBuilder.Entity<UserInfo>(entity =>

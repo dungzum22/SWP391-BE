@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: platformflower-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=PlatformFlower123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./Scripts:/docker-entrypoint-initdb.d
+    networks:
+      - platformflower-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P PlatformFlower123! -Q 'SELECT 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Database Initialization
+  db-init:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: platformflower-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./Scripts:/scripts
+    networks:
+      - platformflower-network
+    command: >
+      sh -c "
+        echo 'Waiting for SQL Server to be ready...'
+        sleep 30
+        echo 'Running database initialization script...'
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P PlatformFlower123! -i /scripts/CreateFlowershopDatabase.sql
+        echo 'Database initialization completed!'
+      "
+    restart: "no"
+
+  # .NET Backend API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: platformflower-api
+    depends_on:
+      - db-init
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Data Source=sqlserver;Initial Catalog=Flowershop;User ID=sa;Password=PlatformFlower123!;Encrypt=True;Trust Server Certificate=True
+    ports:
+      - "5000:8080"
+    networks:
+      - platformflower-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  sqlserver_data:
+    driver: local
+
+networks:
+  platformflower-network:
+    driver: bridge

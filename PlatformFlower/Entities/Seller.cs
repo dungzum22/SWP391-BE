@@ -13,8 +13,6 @@ public partial class Seller
 
     public string AddressSeller { get; set; } = null!;
 
-    public string? Type { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -24,8 +22,6 @@ public partial class Seller
     public string Role { get; set; } = null!;
 
     public string? Introduction { get; set; }
-
-    public int? Quantity { get; set; }
 
     public virtual ICollection<FlowerInfo> FlowerInfos { get; set; } = new List<FlowerInfo>();
 
