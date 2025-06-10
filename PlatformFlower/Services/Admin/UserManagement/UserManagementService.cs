@@ -99,6 +99,46 @@ namespace PlatformFlower.Services.Admin.UserManagement
             }
         }
 
+        public async Task<List<UserListResponseDto>> GetAllUsersAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting all users list without pagination or filtering");
+
+                var users = await _context.Users
+                    .Include(u => u.UserInfos)
+                    .OrderByDescending(u => u.CreatedDate)
+                    .Select(u => new UserListResponseDto
+                    {
+                        UserId = u.UserId,
+                        Username = u.Username,
+                        Email = u.Email,
+                        Type = u.Type,
+                        CreatedAt = u.CreatedDate,
+                        UpdatedAt = u.CreatedDate,
+                        IsActive = u.Status == "active" || u.Status == null,
+                        UserInfo = u.UserInfos.Any() ? new UserInfoManagementDto
+                        {
+                            FullName = u.UserInfos.First().FullName,
+                            Phone = null,
+                            Address = u.UserInfos.First().Address,
+                            DateOfBirth = u.UserInfos.First().BirthDate.HasValue ? u.UserInfos.First().BirthDate.Value.ToDateTime(TimeOnly.MinValue) : null,
+                            Gender = u.UserInfos.First().Sex,
+                            Avatar = u.UserInfos.First().Avatar
+                        } : null
+                    })
+                    .ToListAsync();
+
+                _logger.LogInformation($"Retrieved {users.Count} users");
+                return users;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting all users list: {ex.Message}", ex);
+                throw;
+            }
+        }
+
         public async Task<UserDetailResponseDto?> GetUserByIdAsync(int userId)
         {
             try
