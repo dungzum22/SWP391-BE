@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PlatformFlower.Models.DTOs
+namespace PlatformFlower.Models.DTOs.User
 {
-    public class UpdateUserInfoDto
+    public class UpdateUserRequest
     {
         [StringLength(255, ErrorMessage = "Full name must not exceed 255 characters")]
         public string? FullName { get; set; }

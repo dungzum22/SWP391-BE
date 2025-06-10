@@ -1,6 +1,6 @@
-namespace PlatformFlower.Models.DTOs
+namespace PlatformFlower.Models.DTOs.Seller
 {
-    public class SellerResponseDto
+    public class SellerProfileResponse
     {
         public int SellerId { get; set; }
         public int UserId { get; set; }
@@ -13,6 +13,6 @@ namespace PlatformFlower.Models.DTOs
         public string? Introduction { get; set; }
         
         // Include user information for convenience
-        public UserResponseDto? User { get; set; }
+        public User.UserResponse? User { get; set; }
     }
 }

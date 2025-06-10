@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PlatformFlower.Models.DTOs
+namespace PlatformFlower.Models.DTOs.Category
 {
-    public class CategoryManageRequestDto
+    public class CreateCategoryRequest
     {
         /// <summary>
         /// Category ID - 0 or null for CREATE, > 0 for UPDATE/DELETE
@@ -26,16 +26,4 @@ namespace PlatformFlower.Models.DTOs
         /// </summary>
         public bool IsDeleted { get; set; } = false;
     }
-
-    public class CategoryResponseDto
-    {
-        public int CategoryId { get; set; }
-        public string CategoryName { get; set; } = null!;
-        public string? Status { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public int FlowerCount { get; set; } // Number of flowers in this category
-    }
-
-
 }
