@@ -102,6 +102,9 @@ namespace PlatformFlower
             // Register Seller services
             builder.Services.AddScoped<PlatformFlower.Services.Seller.Profile.ISellerProfileService, PlatformFlower.Services.Seller.Profile.SellerProfileService>();
 
+            // Register Admin services
+            builder.Services.AddScoped<PlatformFlower.Services.Admin.UserManagement.IUserManagementService, PlatformFlower.Services.Admin.UserManagement.UserManagementService>();
+
             // Register Email services
             builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
             builder.Services.AddScoped<PlatformFlower.Services.Email.IEmailService, PlatformFlower.Services.Email.EmailService>();
