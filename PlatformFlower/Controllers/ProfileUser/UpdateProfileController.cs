@@ -7,19 +7,19 @@ using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
 using PlatformFlower.Services.User.Profile;
 
-namespace PlatformFlower.Controllers
+namespace PlatformFlower.Controllers.ProfileUser
 {
     [ApiController]
-    [Route("api/[controller]")]
-    [Authorize] // All endpoints require authentication
-    public class UserController : ControllerBase
+    [Route("api/user")]
+    [Authorize]
+    public class UpdateProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;
         private readonly IResponseService _responseService;
         private readonly IValidationService _validationService;
         private readonly IAppLogger _logger;
 
-        public UserController(
+        public UpdateProfileController(
             IProfileService profileService,
             IResponseService responseService,
             IValidationService validationService,
@@ -91,77 +91,6 @@ namespace PlatformFlower.Controllers
                 var response = _responseService.CreateErrorResponse<UserResponseDto>(
                     "An unexpected error occurred during profile update"
                 );
-                return StatusCode(500, response);
-            }
-        }
-
-        /// <summary>
-        /// Get current user's profile information
-        /// </summary>
-        /// <returns>Current user information</returns>
-        [HttpGet("profile")]
-        public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetProfile()
-        {
-            try
-            {
-                // Get user ID from JWT token claims
-                var userIdClaim = User.FindFirst("user_id")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                {
-                    _logger.LogWarning("Invalid user ID in JWT token");
-                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponseDto>("Invalid token");
-                    return BadRequest(badRequestResponse);
-                }
-
-                _logger.LogInformation($"Getting profile for user ID: {userId}");
-
-                var user = await _profileService.GetUserByIdAsync(userId);
-                
-                if (user == null)
-                {
-                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponseDto>("User not found");
-                    return NotFound(notFoundResponse);
-                }
-
-                var response = _responseService.CreateSuccessResponse(user, "Profile retrieved successfully");
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Unexpected error during profile retrieval: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(
-                    "An unexpected error occurred during profile retrieval"
-                );
-                return StatusCode(500, response);
-            }
-        }
-
-        /// <summary>
-        /// Test Cloudinary connection (Development only)
-        /// </summary>
-        /// <returns>Cloudinary connection status</returns>
-        [HttpGet("test-cloudinary-config")]
-        public ActionResult<ApiResponse<object>> TestCloudinaryConfig()
-        {
-            try
-            {
-                var cloudinaryInfo = new
-                {
-                    CloudNameConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
-                        .GetService<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration>()?.CloudName),
-                    ApiKeyConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
-                        .GetService<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration>()?.ApiKey),
-                    ApiSecretConfigured = !string.IsNullOrEmpty(HttpContext.RequestServices
-                        .GetService<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration>()?.ApiSecret)
-                };
-
-                var response = _responseService.CreateSuccessResponse(cloudinaryInfo, "Cloudinary configuration check");
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Cloudinary config test failed: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<object>($"Cloudinary config test failed: {ex.Message}");
                 return StatusCode(500, response);
             }
         }

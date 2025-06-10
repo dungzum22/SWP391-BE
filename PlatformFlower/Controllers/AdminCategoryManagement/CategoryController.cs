@@ -3,55 +3,20 @@ using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models.DTOs;
 using PlatformFlower.Services.Admin.CategoryManagement;
 
-namespace PlatformFlower.Controllers.Admin
+namespace PlatformFlower.Controllers.AdminCategoryManagement
 {
     [ApiController]
     [Route("api/admin/categories")]
     [Authorize(Roles = "admin")]
-    public class AdminCategoryController : ControllerBase
+    public class CategoryController : ControllerBase
     {
         private readonly ICategoryManagementService _categoryManagementService;
 
-        public AdminCategoryController(ICategoryManagementService categoryManagementService)
+        public CategoryController(ICategoryManagementService categoryManagementService)
         {
             _categoryManagementService = categoryManagementService;
         }
 
-        /// <summary>
-        /// Universal Category Management API - Handles CREATE, UPDATE, DELETE in one endpoint
-        /// </summary>
-        /// <param name="request">Category management request</param>
-        /// <returns>Category response</returns>
-        /// <remarks>
-        /// Operations:
-        /// - CREATE: Set CategoryId = 0 or null, provide CategoryName
-        /// - UPDATE: Set CategoryId > 0, provide CategoryName and/or Status, IsDeleted = false
-        /// - DELETE: Set CategoryId > 0, IsDeleted = true
-        /// 
-        /// Examples:
-        /// 
-        /// CREATE:
-        /// {
-        ///   "categoryId": 0,
-        ///   "categoryName": "New Category",
-        ///   "status": "active",
-        ///   "isDeleted": false
-        /// }
-        ///
-        /// UPDATE:
-        /// {
-        ///   "categoryId": 5,
-        ///   "categoryName": "Updated Category Name",
-        ///   "status": "active",
-        ///   "isDeleted": false
-        /// }
-        ///
-        /// DELETE:
-        /// {
-        ///   "categoryId": 5,
-        ///   "isDeleted": true
-        /// }
-        /// </remarks>
         [HttpPost("manage")]
         public async Task<ActionResult<CategoryResponseDto>> ManageCategory([FromBody] CategoryManageRequestDto request)
         {
