@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PlatformFlower.Models.DTOs
+namespace PlatformFlower.Models.DTOs.Auth
 {
-    public class ResetPasswordDto
+    public class ResetPasswordRequest
     {
         [Required(ErrorMessage = "Reset token is required")]
         public string Token { get; set; } = null!;
