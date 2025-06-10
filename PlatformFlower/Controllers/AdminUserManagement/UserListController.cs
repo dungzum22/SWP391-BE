@@ -28,21 +28,13 @@ namespace PlatformFlower.Controllers.AdminUserManagement
         }
 
         [HttpGet("users")]
-        public async Task<ActionResult<ApiResponse<PaginatedUsersResponseDto>>> GetUsers(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string? searchTerm = null,
-            [FromQuery] string? userType = null,
-            [FromQuery] bool? isActive = null)
+        public async Task<ActionResult<ApiResponse<List<UserListResponseDto>>>> GetUsers()
         {
             try
             {
-                _logger.LogInformation($"Admin getting users list - Page: {pageNumber}, Size: {pageSize}");
+                _logger.LogInformation("Admin getting all users list");
 
-                if (pageNumber < 1) pageNumber = 1;
-                if (pageSize < 1 || pageSize > 100) pageSize = 10;
-
-                var result = await _userManagementService.GetUsersAsync(pageNumber, pageSize, searchTerm, userType, isActive);
+                var result = await _userManagementService.GetAllUsersAsync();
 
                 var response = _responseService.CreateSuccessResponse(result, "Users retrieved successfully");
                 return Ok(response);
@@ -50,7 +42,7 @@ namespace PlatformFlower.Controllers.AdminUserManagement
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting users list: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<PaginatedUsersResponseDto>(
+                var response = _responseService.CreateErrorResponse<List<UserListResponseDto>>(
                     "An error occurred while retrieving users"
                 );
                 return StatusCode(500, response);
