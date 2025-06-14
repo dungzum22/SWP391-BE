@@ -1,11 +1,12 @@
-using PlatformFlower.Models.DTOs;
+
+using PlatformFlower.Models.DTOs.User;
 using System.Security;
 
 namespace PlatformFlower.Services.User.Profile
 {
     public static class ProfileValidation
     {
-        public static void ValidateProfileUpdate(UpdateUserInfoDto updateDto)
+        public static void ValidateProfileUpdate(UpdateUserRequest updateDto)
         {
             var dtoType = updateDto.GetType();
             var properties = dtoType.GetProperties();

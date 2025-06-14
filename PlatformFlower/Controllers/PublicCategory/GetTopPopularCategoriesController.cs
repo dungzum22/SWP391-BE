@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Common.Category;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
@@ -25,14 +25,9 @@ namespace PlatformFlower.Controllers.PublicCategory
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get top 3 most popular active categories for header display
-        /// Returns categories with most flowers, sorted by flower count (desc) then by name (asc)
-        /// Only includes categories with status = 'active'
-        /// </summary>
-        /// <returns>List of top 3 popular active categories</returns>
+
         [HttpGet("top-popular")]
-        public async Task<ActionResult<ApiResponse<List<CategoryResponseDto>>>> GetTopPopularCategories()
+        public async Task<ActionResult<ApiResponse<List<CategoryResponse>>>> GetTopPopularCategories()
         {
             try
             {
@@ -51,7 +46,7 @@ namespace PlatformFlower.Controllers.PublicCategory
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting top popular categories: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<List<CategoryResponseDto>>(
+                var response = _responseService.CreateErrorResponse<List<CategoryResponse>>(
                     "An error occurred while retrieving top popular categories"
                 );
                 return StatusCode(500, response);

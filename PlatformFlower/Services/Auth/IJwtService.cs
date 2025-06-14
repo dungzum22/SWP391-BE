@@ -1,4 +1,4 @@
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 
 namespace PlatformFlower.Services.Auth
 {
@@ -9,7 +9,7 @@ namespace PlatformFlower.Services.Auth
         /// </summary>
         /// <param name="user">User information</param>
         /// <returns>JWT token string</returns>
-        string GenerateToken(UserResponseDto user);
+        string GenerateToken(UserResponse user);
 
         /// <summary>
         /// Validate JWT token

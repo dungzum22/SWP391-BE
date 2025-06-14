@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
@@ -31,15 +31,9 @@ namespace PlatformFlower.Controllers.ProfileUser
             _logger = logger;
         }
 
-        /// <summary>
-        /// Update current user's information including avatar upload
-        /// SECURITY NOTE: This endpoint only allows updating UserInfo fields.
-        /// User.Type (role) cannot be changed via this endpoint - admin-only functionality.
-        /// </summary>
-        /// <param name="updateDto">Update data (UserInfo fields only)</param>
-        /// <returns>Updated user information</returns>
+
         [HttpPut("profile")]
-        public async Task<ActionResult<ApiResponse<UserResponseDto>>> UpdateProfile([FromForm] UpdateUserInfoDto updateDto)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateProfile([FromForm] UpdateUserRequest updateDto)
         {
             try
             {
@@ -48,7 +42,7 @@ namespace PlatformFlower.Controllers.ProfileUser
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
                     _logger.LogWarning("Invalid user ID in JWT token");
-                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponseDto>("Invalid token");
+                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponse>("Invalid token");
                     return BadRequest(badRequestResponse);
                 }
 
@@ -57,7 +51,7 @@ namespace PlatformFlower.Controllers.ProfileUser
                 // Validate model state
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<UserResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<UserResponse>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
@@ -76,19 +70,19 @@ namespace PlatformFlower.Controllers.ProfileUser
             catch (ArgumentException ex)
             {
                 _logger.LogWarning($"Profile update failed - invalid argument: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<UserResponse>(ex.Message);
                 return BadRequest(response);
             }
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning($"Profile update failed - operation error: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<UserResponse>(ex.Message);
                 return BadRequest(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during profile update: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(
+                var response = _responseService.CreateErrorResponse<UserResponse>(
                     "An unexpected error occurred during profile update"
                 );
                 return StatusCode(500, response);

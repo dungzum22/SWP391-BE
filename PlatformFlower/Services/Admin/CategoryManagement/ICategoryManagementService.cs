@@ -1,4 +1,6 @@
-using PlatformFlower.Models.DTOs;
+
+
+using PlatformFlower.Models.DTOs.Category;
 
 namespace PlatformFlower.Services.Admin.CategoryManagement
 {
@@ -9,19 +11,19 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
         /// </summary>
         /// <param name="request">Category management request</param>
         /// <returns>Category response with operation result</returns>
-        Task<CategoryResponseDto> ManageCategoryAsync(CategoryManageRequestDto request);
+        Task<CategoryResponse> ManageCategoryAsync(CreateCategoryRequest request);
 
         /// <summary>
         /// Get all categories
         /// </summary>
         /// <returns>List of all categories</returns>
-        Task<List<CategoryResponseDto>> GetAllCategoriesAsync();
+        Task<List<CategoryResponse>> GetAllCategoriesAsync();
 
         /// <summary>
         /// Get category by ID
         /// </summary>
         /// <param name="categoryId">Category ID</param>
         /// <returns>Category details</returns>
-        Task<CategoryResponseDto?> GetCategoryByIdAsync(int categoryId);
+        Task<CategoryResponse?> GetCategoryByIdAsync(int categoryId);
     }
 }

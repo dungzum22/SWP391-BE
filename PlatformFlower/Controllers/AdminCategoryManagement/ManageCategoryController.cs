@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Admin.CategoryManagement;
 
 namespace PlatformFlower.Controllers.AdminCategoryManagement
@@ -18,7 +18,7 @@ namespace PlatformFlower.Controllers.AdminCategoryManagement
         }
 
         [HttpPost("manage")]
-        public async Task<ActionResult<CategoryResponseDto>> ManageCategory([FromBody] CategoryManageRequestDto request)
+        public async Task<ActionResult<CategoryResponse>> ManageCategory([FromBody] CreateCategoryRequest request)
         {
             try
             {

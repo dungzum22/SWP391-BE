@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Seller;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.User.Profile;
 
@@ -21,7 +21,7 @@ namespace PlatformFlower.Services.Seller.Profile
             _logger = logger;
         }
 
-        public async Task<SellerResponseDto> UpsertSellerAsync(int userId, UpdateSellerDto sellerDto)
+        public async Task<SellerProfileResponse> UpsertSellerAsync(int userId, UpdateSellerRequest sellerDto)
         {
             try
             {
@@ -51,24 +51,24 @@ namespace PlatformFlower.Services.Seller.Profile
             }
         }
 
-        public async Task<SellerResponseDto?> GetSellerByUserIdAsync(int userId)
+        public async Task<SellerProfileResponse?> GetSellerByUserIdAsync(int userId)
         {
             var seller = await _context.Sellers
                 .Include(s => s.User)
                 .ThenInclude(u => u.UserInfos)
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
-            return seller != null ? await MapToSellerResponseDto(seller) : null;
+            return seller != null ? await MapToSellerProfileResponse(seller) : null;
         }
 
-        public async Task<SellerResponseDto?> GetSellerByIdAsync(int sellerId)
+        public async Task<SellerProfileResponse?> GetSellerByIdAsync(int sellerId)
         {
             var seller = await _context.Sellers
                 .Include(s => s.User)
                 .ThenInclude(u => u.UserInfos)
                 .FirstOrDefaultAsync(s => s.SellerId == sellerId);
 
-            return seller != null ? await MapToSellerResponseDto(seller) : null;
+            return seller != null ? await MapToSellerProfileResponse(seller) : null;
         }
 
         public async Task<bool> IsUserSellerAsync(int userId)
@@ -76,7 +76,7 @@ namespace PlatformFlower.Services.Seller.Profile
             return await _context.Sellers.AnyAsync(s => s.UserId == userId);
         }
 
-        private async Task<SellerResponseDto> CreateNewSellerAsync(Entities.User user, UpdateSellerDto sellerDto)
+        private async Task<SellerProfileResponse> CreateNewSellerAsync(Entities.User user, UpdateSellerRequest sellerDto)
         {
             _logger.LogInformation($"Creating new seller for user ID: {user.UserId}");
 
@@ -107,7 +107,7 @@ namespace PlatformFlower.Services.Seller.Profile
 
                 _logger.LogInformation($"New seller created successfully for user ID: {user.UserId}, seller ID: {seller.SellerId}");
 
-                return await MapToSellerResponseDto(seller);
+                return await MapToSellerProfileResponse(seller);
             }
             catch
             {
@@ -116,7 +116,7 @@ namespace PlatformFlower.Services.Seller.Profile
             }
         }
 
-        private async Task<SellerResponseDto> UpdateExistingSellerAsync(Entities.Seller seller, UpdateSellerDto sellerDto)
+        private async Task<SellerProfileResponse> UpdateExistingSellerAsync(Entities.Seller seller, UpdateSellerRequest sellerDto)
         {
             _logger.LogInformation($"Updating existing seller for user ID: {seller.UserId}");
 
@@ -133,7 +133,7 @@ namespace PlatformFlower.Services.Seller.Profile
 
             _logger.LogInformation($"Seller updated successfully for user ID: {seller.UserId}, seller ID: {seller.SellerId}");
 
-            return await MapToSellerResponseDto(seller);
+            return await MapToSellerProfileResponse(seller);
         }
 
         private async Task ValidateShopNameAsync(int? sellerId, string shopName)
@@ -155,11 +155,11 @@ namespace PlatformFlower.Services.Seller.Profile
             _logger.LogInformation($"Shop name validation passed for: {shopName}");
         }
 
-        private async Task<SellerResponseDto> MapToSellerResponseDto(Entities.Seller seller)
+        private async Task<SellerProfileResponse> MapToSellerProfileResponse(Entities.Seller seller)
         {
             var userResponse = await _profileService.GetUserByIdAsync(seller.UserId);
 
-            return new SellerResponseDto
+            return new SellerProfileResponse
             {
                 SellerId = seller.SellerId,
                 UserId = seller.UserId,

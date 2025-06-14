@@ -1,11 +1,11 @@
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 
 namespace PlatformFlower.Services.User.Profile
 {
     public interface IProfileService
     {
-        Task<UserResponseDto?> GetUserByIdAsync(int userId);
-        Task<UserResponseDto?> GetUserByUsernameAsync(string username);
-        Task<UserResponseDto> UpdateUserInfoAsync(int userId, UpdateUserInfoDto updateDto);
+        Task<UserResponse?> GetUserByIdAsync(int userId);
+        Task<UserResponse?> GetUserByUsernameAsync(string username);
+        Task<UserResponse> UpdateUserInfoAsync(int userId, UpdateUserRequest updateDto);
     }
 }

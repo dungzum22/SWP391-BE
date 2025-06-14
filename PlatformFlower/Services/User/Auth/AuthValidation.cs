@@ -1,12 +1,13 @@
-using PlatformFlower.Models.DTOs;
+
 using PlatformFlower.Services.Common.Validation;
 using Microsoft.EntityFrameworkCore;
+using PlatformFlower.Models.DTOs.Auth;
 
 namespace PlatformFlower.Services.User.Auth
 {
     public static class AuthValidation
     {
-        public static async Task ValidateRegistrationAsync(RegisterUserDto registerDto, FlowershopContext context, IValidationService validationService)
+        public static async Task ValidateRegistrationAsync(RegisterRequest registerDto, FlowershopContext context, IValidationService validationService)
         {
             if (await context.Users.AnyAsync(u => u.Username == registerDto.Username))
             {
@@ -29,7 +30,7 @@ namespace PlatformFlower.Services.User.Auth
             }
         }
 
-        public static void ValidateLogin(LoginUserDto loginDto)
+        public static void ValidateLogin(LoginRequest loginDto)
         {
             if (string.IsNullOrWhiteSpace(loginDto.Username))
             {
@@ -42,7 +43,7 @@ namespace PlatformFlower.Services.User.Auth
             }
         }
 
-        public static void ValidateResetPassword(ResetPasswordDto resetDto)
+        public static void ValidateResetPassword(ResetPasswordRequest resetDto)
         {
             if (string.IsNullOrWhiteSpace(resetDto.Token))
             {

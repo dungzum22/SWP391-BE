@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Entities;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
+
 
 namespace PlatformFlower.Services.Admin.CategoryManagement
 {
@@ -13,7 +14,7 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             _context = context;
         }
 
-        public async Task<CategoryResponseDto> ManageCategoryAsync(CategoryManageRequestDto request)
+        public async Task<CategoryResponse> ManageCategoryAsync(CreateCategoryRequest request)
         {
             // Validate request
             ValidateRequest(request);
@@ -36,7 +37,7 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             }
         }
 
-        private async Task<CategoryResponseDto> CreateCategoryAsync(CategoryManageRequestDto request)
+        private async Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest request)
         {
             // Check if category name already exists
             var existingCategory = await _context.Categories
@@ -58,10 +59,10 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return await MapToCategoryResponseDto(category);
+            return await MapToCategoryResponse(category);
         }
 
-        private async Task<CategoryResponseDto> UpdateCategoryAsync(CategoryManageRequestDto request)
+        private async Task<CategoryResponse> UpdateCategoryAsync(CreateCategoryRequest request)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == request.CategoryId);
@@ -95,10 +96,10 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
             await _context.SaveChangesAsync();
 
-            return await MapToCategoryResponseDto(category);
+            return await MapToCategoryResponse(category);
         }
 
-        private async Task<CategoryResponseDto> DeleteCategoryAsync(int categoryId)
+        private async Task<CategoryResponse> DeleteCategoryAsync(int categoryId)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
@@ -123,38 +124,38 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
             await _context.SaveChangesAsync();
 
-            return await MapToCategoryResponseDto(category);
+            return await MapToCategoryResponse(category);
         }
 
-        public async Task<List<CategoryResponseDto>> GetAllCategoriesAsync()
+        public async Task<List<CategoryResponse>> GetAllCategoriesAsync()
         {
             var categories = await _context.Categories
                 .OrderBy(c => c.CategoryName)
                 .ToListAsync();
 
-            var categoryDtos = new List<CategoryResponseDto>();
+            var categoryDtos = new List<CategoryResponse>();
             foreach (var category in categories)
             {
-                categoryDtos.Add(await MapToCategoryResponseDto(category));
+                categoryDtos.Add(await MapToCategoryResponse(category));
             }
 
             return categoryDtos;
         }
 
-        public async Task<CategoryResponseDto?> GetCategoryByIdAsync(int categoryId)
+        public async Task<CategoryResponse?> GetCategoryByIdAsync(int categoryId)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
 
-            return category == null ? null : await MapToCategoryResponseDto(category);
+            return category == null ? null : await MapToCategoryResponse(category);
         }
 
-        private async Task<CategoryResponseDto> MapToCategoryResponseDto(Category category)
+        private async Task<CategoryResponse> MapToCategoryResponse(Category category)
         {
             var flowerCount = await _context.FlowerInfos
                 .CountAsync(f => f.CategoryId == category.CategoryId);
 
-            return new CategoryResponseDto
+            return new CategoryResponse
             {
                 CategoryId = category.CategoryId,
                 CategoryName = category.CategoryName,
@@ -165,7 +166,7 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             };
         }
 
-        private static void ValidateRequest(CategoryManageRequestDto request)
+        private static void ValidateRequest(CreateCategoryRequest request)
         {
             // For CREATE operation
             if (request.CategoryId == null || request.CategoryId == 0)

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.User.Profile;
@@ -32,7 +32,7 @@ namespace PlatformFlower.Controllers.ProfileUser
         /// </summary>
         /// <returns>Current user information</returns>
         [HttpGet("profile")]
-        public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetProfile()
+        public async Task<ActionResult<ApiResponse<UserResponse>>> GetProfile()
         {
             try
             {
@@ -41,7 +41,7 @@ namespace PlatformFlower.Controllers.ProfileUser
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
                     _logger.LogWarning("Invalid user ID in JWT token");
-                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponseDto>("Invalid token");
+                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponse>("Invalid token");
                     return BadRequest(badRequestResponse);
                 }
 
@@ -51,7 +51,7 @@ namespace PlatformFlower.Controllers.ProfileUser
                 
                 if (user == null)
                 {
-                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponseDto>("User not found");
+                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponse>("User not found");
                     return NotFound(notFoundResponse);
                 }
 
@@ -61,7 +61,7 @@ namespace PlatformFlower.Controllers.ProfileUser
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during profile retrieval: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(
+                var response = _responseService.CreateErrorResponse<UserResponse>(
                     "An unexpected error occurred during profile retrieval"
                 );
                 return StatusCode(500, response);

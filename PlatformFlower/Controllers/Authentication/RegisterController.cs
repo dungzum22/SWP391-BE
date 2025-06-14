@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Auth;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
@@ -40,7 +41,7 @@ namespace PlatformFlower.Controllers.Authentication
         /// <param name="registerDto">User registration data</param>
         /// <returns>Created user information</returns>
         [HttpPost("register")]
-        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Register([FromBody] RegisterUserDto registerDto)
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> Register([FromBody] RegisterRequest registerDto)
         {
             try
             {
@@ -49,7 +50,7 @@ namespace PlatformFlower.Controllers.Authentication
                 // Validate model state
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<AuthResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<LoginResponse>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
@@ -68,19 +69,19 @@ namespace PlatformFlower.Controllers.Authentication
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning($"Registration failed - business rule violation: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<AuthResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<LoginResponse>(ex.Message);
                 return Conflict(response);
             }
             catch (ArgumentException ex)
             {
                 _logger.LogWarning($"Registration failed - invalid argument: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<AuthResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<LoginResponse>(ex.Message);
                 return BadRequest(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during registration: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<AuthResponseDto>(
+                var response = _responseService.CreateErrorResponse<LoginResponse>(
                     "An unexpected error occurred during registration"
                 );
                 return StatusCode(500, response);
@@ -94,7 +95,7 @@ namespace PlatformFlower.Controllers.Authentication
         /// <returns>User information</returns>
         [HttpGet("user/{id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetUser(int id)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> GetUser(int id)
         {
             try
             {
@@ -104,7 +105,7 @@ namespace PlatformFlower.Controllers.Authentication
                 
                 if (user == null)
                 {
-                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponseDto>("User not found");
+                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponse>("User not found");
                     return NotFound(notFoundResponse);
                 }
 
@@ -114,7 +115,7 @@ namespace PlatformFlower.Controllers.Authentication
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting user by ID {id}: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(
+                var response = _responseService.CreateErrorResponse<UserResponse>(
                     "An error occurred while retrieving user information"
                 );
                 return StatusCode(500, response);
@@ -127,7 +128,7 @@ namespace PlatformFlower.Controllers.Authentication
         /// <returns>Current user information</returns>
         [HttpGet("profile")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetCurrentUserProfile()
+        public async Task<ActionResult<ApiResponse<UserResponse>>> GetCurrentUserProfile()
         {
             try
             {
@@ -136,7 +137,7 @@ namespace PlatformFlower.Controllers.Authentication
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
                     _logger.LogWarning("Invalid user ID in JWT token");
-                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponseDto>("Invalid token");
+                    var badRequestResponse = _responseService.CreateErrorResponse<UserResponse>("Invalid token");
                     return BadRequest(badRequestResponse);
                 }
 
@@ -146,7 +147,7 @@ namespace PlatformFlower.Controllers.Authentication
 
                 if (user == null)
                 {
-                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponseDto>("User not found");
+                    var notFoundResponse = _responseService.CreateErrorResponse<UserResponse>("User not found");
                     return NotFound(notFoundResponse);
                 }
 
@@ -156,7 +157,7 @@ namespace PlatformFlower.Controllers.Authentication
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting current user profile: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserResponseDto>(
+                var response = _responseService.CreateErrorResponse<UserResponse>(
                     "An error occurred while retrieving profile information"
                 );
                 return StatusCode(500, response);
