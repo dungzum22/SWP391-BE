@@ -23,15 +23,34 @@ namespace PlatformFlower.Controllers.AdminCategoryManagement
             try
             {
                 var result = await _categoryManagementService.ManageCategoryAsync(request);
-                
+
                 // Determine operation type for response message
-                string operation = request.CategoryId == null || request.CategoryId == 0 ? "created" :
-                                 request.IsDeleted ? "deleted" : "updated";
-                
+                string operation;
+                string message;
+
+                if (request.CategoryId == null || request.CategoryId == 0)
+                {
+                    // For CREATE operation, check if it was a reactivation
+                    operation = "created";
+                    message = result.CreatedAt < result.UpdatedAt
+                        ? "Category reactivated successfully (was previously inactive)"
+                        : "Category created successfully";
+                }
+                else if (request.IsDeleted)
+                {
+                    operation = "deleted";
+                    message = "Category deleted successfully (set to inactive)";
+                }
+                else
+                {
+                    operation = "updated";
+                    message = "Category updated successfully";
+                }
+
                 return Ok(new
                 {
                     success = true,
-                    message = $"Category {operation} successfully",
+                    message = message,
                     operation = operation,
                     data = result
                 });

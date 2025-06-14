@@ -39,15 +39,28 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
         private async Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest request)
         {
-            // Check if category name already exists
-            var existingCategory = await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName!.ToLower());
+            var existingActiveCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName!.ToLower()
+                                        && c.Status == "active");
 
-            if (existingCategory != null)
+            if (existingActiveCategory != null)
             {
-                throw new InvalidOperationException($"Category '{request.CategoryName}' already exists");
+                throw new InvalidOperationException($"Category '{request.CategoryName}' already exists and is active");
             }
 
+            var existingInactiveCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName!.ToLower()
+                                        && c.Status == "inactive");
+
+            if (existingInactiveCategory != null)
+            {
+                existingInactiveCategory.Status = "active";
+                existingInactiveCategory.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return await MapToCategoryResponse(existingInactiveCategory);
+            }
             var category = new Category
             {
                 CategoryName = request.CategoryName!,
@@ -72,16 +85,16 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
                 throw new InvalidOperationException($"Category with ID {request.CategoryId} not found");
             }
 
-            // Check if new name conflicts with existing category (excluding current one)
             if (!string.IsNullOrEmpty(request.CategoryName))
             {
-                var existingCategory = await _context.Categories
-                    .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName.ToLower() 
-                                            && c.CategoryId != request.CategoryId);
+                var existingActiveCategory = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName.ToLower()
+                                            && c.CategoryId != request.CategoryId
+                                            && c.Status == "active");
 
-                if (existingCategory != null)
+                if (existingActiveCategory != null)
                 {
-                    throw new InvalidOperationException($"Category '{request.CategoryName}' already exists");
+                    throw new InvalidOperationException($"Category '{request.CategoryName}' already exists and is active");
                 }
 
                 category.CategoryName = request.CategoryName;
@@ -109,7 +122,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
                 throw new InvalidOperationException($"Category with ID {categoryId} not found");
             }
 
-            // Check if category has flowers
             var flowerCount = await _context.FlowerInfos
                 .CountAsync(f => f.CategoryId == categoryId);
 
@@ -117,8 +129,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             {
                 throw new InvalidOperationException($"Cannot delete category. It contains {flowerCount} flower(s). Please move or delete flowers first.");
             }
-
-            // Soft delete - set status to inactive
             category.Status = "inactive";
             category.UpdatedAt = DateTime.Now;
 
@@ -168,7 +178,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
         private static void ValidateRequest(CreateCategoryRequest request)
         {
-            // For CREATE operation
             if (request.CategoryId == null || request.CategoryId == 0)
             {
                 if (string.IsNullOrWhiteSpace(request.CategoryName))
@@ -176,7 +185,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
                     throw new ArgumentException("Category name is required for creating a new category");
                 }
             }
-            // For UPDATE operation
             else if (!request.IsDeleted)
             {
                 if (string.IsNullOrWhiteSpace(request.CategoryName) && string.IsNullOrWhiteSpace(request.Status))
@@ -185,8 +193,7 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
                 }
             }
 
-            // Validate status if provided
-            if (!string.IsNullOrEmpty(request.Status) && 
+            if (!string.IsNullOrEmpty(request.Status) &&
                 request.Status != "active" && request.Status != "inactive")
             {
                 throw new ArgumentException("Status must be either 'active' or 'inactive'");
