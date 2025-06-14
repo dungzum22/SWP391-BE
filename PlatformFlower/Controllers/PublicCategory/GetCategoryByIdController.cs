@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Common.Category;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
@@ -25,14 +25,9 @@ namespace PlatformFlower.Controllers.PublicCategory
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get active category by ID (Public access - for users and sellers)
-        /// Only returns category if status = 'active'
-        /// </summary>
-        /// <param name="id">Category ID</param>
-        /// <returns>Category details if active, 404 if not found or inactive</returns>
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<CategoryResponseDto>>> GetActiveCategoryById(int id)
+        public async Task<ActionResult<ApiResponse<CategoryResponse>>> GetActiveCategoryById(int id)
         {
             try
             {
@@ -42,7 +37,7 @@ namespace PlatformFlower.Controllers.PublicCategory
 
                 if (result == null)
                 {
-                    var notFoundResponse = _responseService.CreateErrorResponse<CategoryResponseDto>(
+                    var notFoundResponse = _responseService.CreateErrorResponse<CategoryResponse>(
                         $"Active category with ID {id} not found"
                     );
                     return NotFound(notFoundResponse);
@@ -58,7 +53,7 @@ namespace PlatformFlower.Controllers.PublicCategory
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting active category by ID {id}: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<CategoryResponseDto>(
+                var response = _responseService.CreateErrorResponse<CategoryResponse>(
                     "An error occurred while retrieving the category"
                 );
                 return StatusCode(500, response);

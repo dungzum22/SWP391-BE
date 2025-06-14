@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Seller;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Seller.Profile;
@@ -28,7 +28,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
 
         [HttpGet("{id}")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<SellerResponseDto>>> GetSellerById(int id)
+        public async Task<ActionResult<ApiResponse<SellerProfileResponse>>> GetSellerById(int id)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 
                 if (seller == null)
                 {
-                    var notFoundResponse = _responseService.CreateErrorResponse<SellerResponseDto>("Seller not found");
+                    var notFoundResponse = _responseService.CreateErrorResponse<SellerProfileResponse>("Seller not found");
                     return NotFound(notFoundResponse);
                 }
 
@@ -48,7 +48,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during seller retrieval: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<SellerResponseDto>(
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(
                     "An unexpected error occurred during seller retrieval"
                 );
                 return StatusCode(500, response);

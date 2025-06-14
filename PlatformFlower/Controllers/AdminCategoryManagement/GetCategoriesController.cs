@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Admin.CategoryManagement;
 
 namespace PlatformFlower.Controllers.AdminCategoryManagement
@@ -22,7 +22,7 @@ namespace PlatformFlower.Controllers.AdminCategoryManagement
         /// </summary>
         /// <returns>List of all categories</returns>
         [HttpGet]
-        public async Task<ActionResult<List<CategoryResponseDto>>> GetAllCategories()
+        public async Task<ActionResult<List<CategoryResponse>>> GetAllCategories()
         {
             try
             {

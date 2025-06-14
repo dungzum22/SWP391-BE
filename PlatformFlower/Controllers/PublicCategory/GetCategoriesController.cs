@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Common.Category;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
@@ -25,13 +25,9 @@ namespace PlatformFlower.Controllers.PublicCategory
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get all active categories (Public access - for users and sellers)
-        /// Only returns categories with status = 'active'
-        /// </summary>
-        /// <returns>List of active categories</returns>
+
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<List<CategoryResponseDto>>>> GetActiveCategories()
+        public async Task<ActionResult<ApiResponse<List<CategoryResponse>>>> GetActiveCategories()
         {
             try
             {
@@ -49,7 +45,7 @@ namespace PlatformFlower.Controllers.PublicCategory
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting active categories: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<List<CategoryResponseDto>>(
+                var response = _responseService.CreateErrorResponse<List<CategoryResponse>>(
                     "An error occurred while retrieving categories"
                 );
                 return StatusCode(500, response);

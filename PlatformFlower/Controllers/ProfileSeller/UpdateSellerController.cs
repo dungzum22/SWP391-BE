@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Seller;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
@@ -32,7 +32,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
         }
 
         [HttpPut("profile")]
-        public async Task<ActionResult<ApiResponse<SellerResponseDto>>> UpsertSellerProfile([FromBody] UpdateSellerDto sellerDto)
+        public async Task<ActionResult<ApiResponse<SellerProfileResponse>>> UpsertSellerProfile([FromBody] UpdateSellerRequest sellerDto)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
                     _logger.LogWarning("Invalid user ID in JWT token");
-                    var badRequestResponse = _responseService.CreateErrorResponse<SellerResponseDto>("Invalid token");
+                    var badRequestResponse = _responseService.CreateErrorResponse<SellerProfileResponse>("Invalid token");
                     return BadRequest(badRequestResponse);
                 }
 
@@ -48,7 +48,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
 
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<SellerResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<SellerProfileResponse>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
@@ -67,13 +67,13 @@ namespace PlatformFlower.Controllers.ProfileSeller
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning($"Seller profile upsert failed - business rule violation: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<SellerResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(ex.Message);
                 return Conflict(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during seller profile upsert: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<SellerResponseDto>(
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(
                     "An unexpected error occurred during seller profile operation"
                 );
                 return StatusCode(500, response);

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Auth;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
@@ -32,24 +32,24 @@ namespace PlatformFlower.Controllers.Authentication
         /// <summary>
         /// Request password reset
         /// </summary>
-        /// <param name="forgotPasswordDto">Email for password reset</param>
+        /// <param name="ForgotPasswordRequest">Email for password reset</param>
         /// <returns>Response indicating success or failure</returns>
         [HttpPost("forgot-password")]
-        public async Task<ActionResult<ApiResponse<ForgotPasswordResponseDto>>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        public async Task<ActionResult<ApiResponse<ForgotPasswordResponse>>> ForgotPassword([FromBody] ForgotPasswordRequest ForgotPasswordRequest)
         {
             try
             {
-                _logger.LogInformation($"Password reset request for email: {forgotPasswordDto?.Email}");
+                _logger.LogInformation($"Password reset request for email: {ForgotPasswordRequest?.Email}");
 
                 // Validate model state
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<ForgotPasswordResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<ForgotPasswordResponse>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
                 // Call service to handle business logic
-                var result = await _authService.ForgotPasswordAsync(forgotPasswordDto!.Email);
+                var result = await _authService.ForgotPasswordAsync(ForgotPasswordRequest!.Email);
 
                 // Return response
                 var response = _responseService.CreateSuccessResponse(result, result.Message);
@@ -58,7 +58,7 @@ namespace PlatformFlower.Controllers.Authentication
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during password reset request: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<ForgotPasswordResponseDto>(
+                var response = _responseService.CreateErrorResponse<ForgotPasswordResponse>(
                     "An unexpected error occurred during password reset request"
                 );
                 return StatusCode(500, response);
@@ -68,24 +68,24 @@ namespace PlatformFlower.Controllers.Authentication
         /// <summary>
         /// Reset password using token
         /// </summary>
-        /// <param name="resetPasswordDto">Reset password data</param>
+        /// <param name="ResetPasswordRequest">Reset password data</param>
         /// <returns>Response indicating success or failure</returns>
         [HttpPost("reset-password")]
-        public async Task<ActionResult<ApiResponse<ForgotPasswordResponseDto>>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        public async Task<ActionResult<ApiResponse<ForgotPasswordResponse>>> ResetPassword([FromBody] ResetPasswordRequest ResetPasswordRequest)
         {
             try
             {
-                _logger.LogInformation($"Password reset attempt with token: {resetPasswordDto?.Token}");
+                _logger.LogInformation($"Password reset attempt with token: {ResetPasswordRequest?.Token}");
 
                 // Validate model state
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<ForgotPasswordResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<ForgotPasswordResponse>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
                 // Call service to handle business logic
-                var result = await _authService.ResetPasswordAsync(resetPasswordDto!);
+                var result = await _authService.ResetPasswordAsync(ResetPasswordRequest!);
 
                 if (result.Success)
                 {
@@ -94,14 +94,14 @@ namespace PlatformFlower.Controllers.Authentication
                 }
                 else
                 {
-                    var response = _responseService.CreateErrorResponse<ForgotPasswordResponseDto>(result.Message);
+                    var response = _responseService.CreateErrorResponse<ForgotPasswordResponse>(result.Message);
                     return BadRequest(response);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during password reset: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<ForgotPasswordResponseDto>(
+                var response = _responseService.CreateErrorResponse<ForgotPasswordResponse>(
                     "An unexpected error occurred during password reset"
                 );
                 return StatusCode(500, response);

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Logging;
 
 namespace PlatformFlower.Services.Admin.UserManagement
@@ -15,7 +15,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
             _logger = logger;
         }
 
-        public async Task<PaginatedUsersResponseDto> GetUsersAsync(int pageNumber = 1, int pageSize = 10, string? searchTerm = null, string? userType = null, bool? isActive = null)
+        public async Task<PaginatedUsersResponse> GetUsersAsync(int pageNumber = 1, int pageSize = 10, string? searchTerm = null, string? userType = null, bool? isActive = null)
         {
             try
             {
@@ -58,7 +58,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                     .OrderByDescending(u => u.CreatedDate)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(u => new UserListResponseDto
+                    .Select(u => new UserListRequest
                     {
                         UserId = u.UserId,
                         Username = u.Username,
@@ -67,7 +67,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                         CreatedAt = u.CreatedDate,
                         UpdatedAt = u.CreatedDate, // Use CreatedDate as UpdatedAt since no UpdatedAt field
                         IsActive = u.Status == "active" || u.Status == null,
-                        UserInfo = u.UserInfos.Any() ? new UserInfoManagementDto
+                        UserInfo = u.UserInfos.Any() ? new UserInfoManagement
                         {
                             FullName = u.UserInfos.First().FullName,
                             Phone = null, // UserInfo doesn't have Phone field
@@ -81,7 +81,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
 
                 _logger.LogInformation($"Retrieved {users.Count} users out of {totalCount} total");
 
-                return new PaginatedUsersResponseDto
+                return new PaginatedUsersResponse
                 {
                     Users = users,
                     TotalCount = totalCount,
@@ -99,7 +99,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
             }
         }
 
-        public async Task<List<UserListResponseDto>> GetAllUsersAsync()
+        public async Task<List<UserListRequest>> GetAllUsersAsync()
         {
             try
             {
@@ -108,7 +108,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                 var users = await _context.Users
                     .Include(u => u.UserInfos)
                     .OrderByDescending(u => u.CreatedDate)
-                    .Select(u => new UserListResponseDto
+                    .Select(u => new UserListRequest
                     {
                         UserId = u.UserId,
                         Username = u.Username,
@@ -117,7 +117,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                         CreatedAt = u.CreatedDate,
                         UpdatedAt = u.CreatedDate,
                         IsActive = u.Status == "active" || u.Status == null,
-                        UserInfo = u.UserInfos.Any() ? new UserInfoManagementDto
+                        UserInfo = u.UserInfos.Any() ? new UserInfoManagement
                         {
                             FullName = u.UserInfos.First().FullName,
                             Phone = null,
@@ -139,7 +139,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
             }
         }
 
-        public async Task<UserDetailResponseDto?> GetUserByIdAsync(int userId)
+        public async Task<UserDetailResponse?> GetUserByIdAsync(int userId)
         {
             try
             {
@@ -159,7 +159,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                 var userInfo = user.UserInfos.FirstOrDefault();
                 var seller = user.Sellers.FirstOrDefault();
 
-                var result = new UserDetailResponseDto
+                var result = new UserDetailResponse
                 {
                     UserId = user.UserId,
                     Username = user.Username,
@@ -168,7 +168,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                     CreatedAt = user.CreatedDate,
                     UpdatedAt = user.CreatedDate, // Use CreatedDate as UpdatedAt
                     IsActive = user.Status == "active" || user.Status == null,
-                    UserInfo = userInfo != null ? new UserInfoManagementDto
+                    UserInfo = userInfo != null ? new UserInfoManagement
                     {
                         FullName = userInfo.FullName,
                         Phone = null, // UserInfo doesn't have Phone field
@@ -177,7 +177,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                         Gender = userInfo.Sex,
                         Avatar = userInfo.Avatar
                     } : null,
-                    SellerInfo = seller != null ? new SellerInfoDto
+                    SellerInfo = seller != null ? new SellerInfo
                     {
                         SellerId = seller.SellerId,
                         ShopName = seller.ShopName,
@@ -198,7 +198,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
             }
         }
 
-        public async Task<UserDetailResponseDto> ToggleUserStatusAsync(int userId, string reason)
+        public async Task<UserDetailResponse> ToggleUserStatusAsync(int userId, string reason)
         {
             try
             {

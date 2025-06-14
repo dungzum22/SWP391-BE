@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Entities;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Common.Logging;
 
 namespace PlatformFlower.Services.Common.Category
@@ -16,7 +16,7 @@ namespace PlatformFlower.Services.Common.Category
             _logger = logger;
         }
 
-        public async Task<List<CategoryResponseDto>> GetActiveCategoriesAsync()
+        public async Task<List<CategoryResponse>> GetActiveCategoriesAsync()
         {
             try
             {
@@ -27,10 +27,10 @@ namespace PlatformFlower.Services.Common.Category
                     .OrderBy(c => c.CategoryName)
                     .ToListAsync();
 
-                var categoryDtos = new List<CategoryResponseDto>();
+                var categoryDtos = new List<CategoryResponse>();
                 foreach (var category in categories)
                 {
-                    categoryDtos.Add(await MapToCategoryResponseDto(category));
+                    categoryDtos.Add(await MapToCategoryResponse(category));
                 }
 
                 _logger.LogInformation($"Retrieved {categoryDtos.Count} active categories");
@@ -43,7 +43,7 @@ namespace PlatformFlower.Services.Common.Category
             }
         }
 
-        public async Task<CategoryResponseDto?> GetActiveCategoryByIdAsync(int categoryId)
+        public async Task<CategoryResponse?> GetActiveCategoryByIdAsync(int categoryId)
         {
             try
             {
@@ -58,7 +58,7 @@ namespace PlatformFlower.Services.Common.Category
                     return null;
                 }
 
-                var result = await MapToCategoryResponseDto(category);
+                var result = await MapToCategoryResponse(category);
                 _logger.LogInformation($"Retrieved active category: {category.CategoryName}");
                 return result;
             }
@@ -69,7 +69,7 @@ namespace PlatformFlower.Services.Common.Category
             }
         }
 
-        public async Task<List<CategoryResponseDto>> GetTopPopularCategoriesAsync()
+        public async Task<List<CategoryResponse>> GetTopPopularCategoriesAsync()
         {
             try
             {
@@ -88,10 +88,10 @@ namespace PlatformFlower.Services.Common.Category
                     .Take(3)
                     .ToListAsync();
 
-                var categoryDtos = new List<CategoryResponseDto>();
+                var categoryDtos = new List<CategoryResponse>();
                 foreach (var item in topCategories)
                 {
-                    var dto = new CategoryResponseDto
+                    var dto = new CategoryResponse
                     {
                         CategoryId = item.Category.CategoryId,
                         CategoryName = item.Category.CategoryName,
@@ -113,12 +113,12 @@ namespace PlatformFlower.Services.Common.Category
             }
         }
 
-        private async Task<CategoryResponseDto> MapToCategoryResponseDto(Entities.Category category)
+        private async Task<CategoryResponse> MapToCategoryResponse(Entities.Category category)
         {
             var flowerCount = await _context.FlowerInfos
                 .CountAsync(f => f.CategoryId == category.CategoryId);
 
-            return new CategoryResponseDto
+            return new CategoryResponse
             {
                 CategoryId = category.CategoryId,
                 CategoryName = category.CategoryName,

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
 using PlatformFlower.Services.Admin.CategoryManagement;
 
 namespace PlatformFlower.Controllers.AdminCategoryManagement
@@ -23,7 +23,7 @@ namespace PlatformFlower.Controllers.AdminCategoryManagement
         /// <param name="id">Category ID</param>
         /// <returns>Category details</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryResponseDto>> GetCategoryById(int id)
+        public async Task<ActionResult<CategoryResponse>> GetCategoryById(int id)
         {
             try
             {
