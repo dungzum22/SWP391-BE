@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace PlatformFlower.Models.DTOs
+namespace PlatformFlower.Models.DTOs.Auth
 {
-    public class LoginUserDto
+    public class LoginRequest
     {
         [Required(ErrorMessage = "Username is required")]
         [StringLength(255, ErrorMessage = "Username must not exceed 255 characters")]
