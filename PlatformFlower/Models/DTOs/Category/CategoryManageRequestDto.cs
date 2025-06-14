@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PlatformFlower.Models.DTOs.Category
 {
-    public class CreateCategoryRequest
+    public class CategoryManageRequestDto
     {
         /// <summary>
         /// Category ID - 0 or null for CREATE, > 0 for UPDATE/DELETE

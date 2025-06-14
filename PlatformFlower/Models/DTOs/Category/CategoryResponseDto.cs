@@ -1,6 +1,6 @@
 namespace PlatformFlower.Models.DTOs.Category
 {
-    public class CategoryResponse
+    public class CategoryResponseDto
     {
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = null!;

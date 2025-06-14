@@ -1,6 +1,6 @@
 namespace PlatformFlower.Models.DTOs.User
 {
-    public class UserResponse
+    public class UserResponseDto
     {
         public int UserId { get; set; }
         public string Username { get; set; } = null!;
@@ -10,10 +10,10 @@ namespace PlatformFlower.Models.DTOs.User
         public string? Status { get; set; }
         
         // UserInfo properties
-        public UserInfo? UserInfo { get; set; }
+        public UserInfoDto? UserInfo { get; set; }
     }
 
-    public class UserInfo
+    public class UserInfoDto
     {
         public int UserInfoId { get; set; }
         public string? FullName { get; set; }

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PlatformFlower.Models.DTOs.User
 {
-    public class UserListRequest
+    public class UserListRequestDto 
     {
         public int UserId { get; set; }
         public string Username { get; set; } = null!;
@@ -11,10 +11,10 @@ namespace PlatformFlower.Models.DTOs.User
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
-        public UserInfoManagement? UserInfo { get; set; }
+        public UserInfoManagementDto? UserInfo { get; set; }
     }
 
-    public class UserInfoManagement
+    public class UserInfoManagementDto
     {
         public string? FullName { get; set; }
         public string? Phone { get; set; }
@@ -24,7 +24,7 @@ namespace PlatformFlower.Models.DTOs.User
         public string? Avatar { get; set; }
     }
 
-    public class UserDetailResponse
+    public class UserDetailResponseDto
     {
         public int UserId { get; set; }
         public string Username { get; set; } = null!;
@@ -33,11 +33,11 @@ namespace PlatformFlower.Models.DTOs.User
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
-        public UserInfoManagement? UserInfo { get; set; }
-        public SellerInfo? SellerInfo { get; set; }
+        public UserInfoManagementDto? UserInfo { get; set; }
+        public SellerInfoDto? SellerInfo { get; set; }
     }
 
-    public class SellerInfo
+    public class SellerInfoDto
     {
         public int SellerId { get; set; }
         public string ShopName { get; set; } = null!;
@@ -47,9 +47,9 @@ namespace PlatformFlower.Models.DTOs.User
         public DateTime? CreatedAt { get; set; }
     }
 
-    public class PaginatedUsersResponse
+    public class PaginatedUsersResponseDto
     {
-        public List<UserListRequest> Users { get; set; } = new();
+        public List<UserListRequestDto> Users { get; set; } = new();
         public int TotalCount { get; set; }
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
@@ -58,7 +58,7 @@ namespace PlatformFlower.Models.DTOs.User
         public bool HasPreviousPage { get; set; }
     }
 
-    public class UserStatusUpdate
+    public class UserStatusUpdateDto
     {
         [Required(ErrorMessage = "Reason is required")]
         [StringLength(500, MinimumLength = 5, ErrorMessage = "Reason must be between 5 and 500 characters")]

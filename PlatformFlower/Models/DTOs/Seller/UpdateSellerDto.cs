@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PlatformFlower.Models.DTOs.Seller
 {
-    public class UpdateSellerRequest
+    public class UpdateSellerDto
     {
         [Required(ErrorMessage = "Shop name is required")]
         [StringLength(255, MinimumLength = 2, ErrorMessage = "Shop name must be between 2 and 255 characters")]
