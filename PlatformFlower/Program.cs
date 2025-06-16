@@ -138,6 +138,9 @@ namespace PlatformFlower
 
             app.UseHttpsRedirection();
 
+            app.UseRouting();
+            app.UseCors("AllowAll");
+
             app.UseAuthentication();
             app.UseAuthorization();
 
