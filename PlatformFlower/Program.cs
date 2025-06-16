@@ -117,6 +117,16 @@ namespace PlatformFlower
             builder.Services.AddSingleton<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration, PlatformFlower.Services.Common.Configuration.CloudinaryConfiguration>();
             builder.Services.AddScoped<PlatformFlower.Services.Storage.IStorageService, PlatformFlower.Services.Storage.CloudinaryStorageService>();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
