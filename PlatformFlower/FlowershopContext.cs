@@ -71,6 +71,9 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.CartId).HasColumnName("cart_id");
             entity.Property(e => e.FlowerId).HasColumnName("flower_id");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("unit_price");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
             entity.HasOne(d => d.Flower).WithMany(p => p.Carts)
@@ -119,6 +122,10 @@ public partial class FlowershopContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("updated_at");
             entity.Property(e => e.FlowerDescription)
                 .HasMaxLength(255)
                 .HasColumnName("flower_description");
@@ -131,7 +138,14 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Price)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("price");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
             entity.Property(e => e.SellerId).HasColumnName("seller_id");
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_deleted");
 
             entity.HasOne(d => d.Category).WithMany(p => p.FlowerInfos)
                 .HasForeignKey(d => d.CategoryId)

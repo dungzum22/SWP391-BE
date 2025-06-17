@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Logging;
 
 namespace PlatformFlower.Services.Admin.UserManagement
@@ -15,91 +15,9 @@ namespace PlatformFlower.Services.Admin.UserManagement
             _logger = logger;
         }
 
-        public async Task<PaginatedUsersResponseDto> GetUsersAsync(int pageNumber = 1, int pageSize = 10, string? searchTerm = null, string? userType = null, bool? isActive = null)
-        {
-            try
-            {
-                _logger.LogInformation($"Getting users list - Page: {pageNumber}, Size: {pageSize}, Search: {searchTerm}, Type: {userType}, Active: {isActive}");
 
-                var query = _context.Users
-                    .Include(u => u.UserInfos)
-                    .AsQueryable();
 
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    query = query.Where(u =>
-                        u.Username.Contains(searchTerm) ||
-                        u.Email.Contains(searchTerm) ||
-                        (u.UserInfos.Any() && u.UserInfos.First().FullName != null && u.UserInfos.First().FullName.Contains(searchTerm)));
-                }
-
-                if (!string.IsNullOrEmpty(userType))
-                {
-                    query = query.Where(u => u.Type == userType);
-                }
-
-                if (isActive.HasValue)
-                {
-                    // Use Status field to determine if user is active
-                    if (isActive.Value)
-                    {
-                        query = query.Where(u => u.Status == "active" || u.Status == null);
-                    }
-                    else
-                    {
-                        query = query.Where(u => u.Status == "inactive");
-                    }
-                }
-
-                var totalCount = await query.CountAsync();
-                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-                var users = await query
-                    .OrderByDescending(u => u.CreatedDate)
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(u => new UserListResponseDto
-                    {
-                        UserId = u.UserId,
-                        Username = u.Username,
-                        Email = u.Email,
-                        Type = u.Type,
-                        CreatedAt = u.CreatedDate,
-                        UpdatedAt = u.CreatedDate, // Use CreatedDate as UpdatedAt since no UpdatedAt field
-                        IsActive = u.Status == "active" || u.Status == null,
-                        UserInfo = u.UserInfos.Any() ? new UserInfoManagementDto
-                        {
-                            FullName = u.UserInfos.First().FullName,
-                            Phone = null, // UserInfo doesn't have Phone field
-                            Address = u.UserInfos.First().Address,
-                            DateOfBirth = u.UserInfos.First().BirthDate.HasValue ? u.UserInfos.First().BirthDate.Value.ToDateTime(TimeOnly.MinValue) : null,
-                            Gender = u.UserInfos.First().Sex,
-                            Avatar = u.UserInfos.First().Avatar
-                        } : null
-                    })
-                    .ToListAsync();
-
-                _logger.LogInformation($"Retrieved {users.Count} users out of {totalCount} total");
-
-                return new PaginatedUsersResponseDto
-                {
-                    Users = users,
-                    TotalCount = totalCount,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize,
-                    TotalPages = totalPages,
-                    HasNextPage = pageNumber < totalPages,
-                    HasPreviousPage = pageNumber > 1
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error getting users list: {ex.Message}", ex);
-                throw;
-            }
-        }
-
-        public async Task<List<UserListResponseDto>> GetAllUsersAsync()
+        public async Task<List<UserListRequest>> GetAllUsersAsync()
         {
             try
             {
@@ -108,7 +26,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                 var users = await _context.Users
                     .Include(u => u.UserInfos)
                     .OrderByDescending(u => u.CreatedDate)
-                    .Select(u => new UserListResponseDto
+                    .Select(u => new UserListRequest
                     {
                         UserId = u.UserId,
                         Username = u.Username,
@@ -117,7 +35,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                         CreatedAt = u.CreatedDate,
                         UpdatedAt = u.CreatedDate,
                         IsActive = u.Status == "active" || u.Status == null,
-                        UserInfo = u.UserInfos.Any() ? new UserInfoManagementDto
+                        UserInfo = u.UserInfos.Any() ? new UserInfoManagement
                         {
                             FullName = u.UserInfos.First().FullName,
                             Phone = null,
@@ -139,7 +57,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
             }
         }
 
-        public async Task<UserDetailResponseDto?> GetUserByIdAsync(int userId)
+        public async Task<UserDetailResponse?> GetUserByIdAsync(int userId)
         {
             try
             {
@@ -159,25 +77,25 @@ namespace PlatformFlower.Services.Admin.UserManagement
                 var userInfo = user.UserInfos.FirstOrDefault();
                 var seller = user.Sellers.FirstOrDefault();
 
-                var result = new UserDetailResponseDto
+                var result = new UserDetailResponse
                 {
                     UserId = user.UserId,
                     Username = user.Username,
                     Email = user.Email,
                     Type = user.Type,
                     CreatedAt = user.CreatedDate,
-                    UpdatedAt = user.CreatedDate, // Use CreatedDate as UpdatedAt
+                    UpdatedAt = user.CreatedDate,
                     IsActive = user.Status == "active" || user.Status == null,
-                    UserInfo = userInfo != null ? new UserInfoManagementDto
+                    UserInfo = userInfo != null ? new UserInfoManagement
                     {
                         FullName = userInfo.FullName,
-                        Phone = null, // UserInfo doesn't have Phone field
+                        Phone = null,
                         Address = userInfo.Address,
                         DateOfBirth = userInfo.BirthDate?.ToDateTime(TimeOnly.MinValue),
                         Gender = userInfo.Sex,
                         Avatar = userInfo.Avatar
                     } : null,
-                    SellerInfo = seller != null ? new SellerInfoDto
+                    SellerInfo = seller != null ? new SellerInfo
                     {
                         SellerId = seller.SellerId,
                         ShopName = seller.ShopName,
@@ -198,7 +116,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
             }
         }
 
-        public async Task<UserDetailResponseDto> ToggleUserStatusAsync(int userId, string reason)
+        public async Task<UserDetailResponse> ToggleUserStatusAsync(int userId, string reason)
         {
             try
             {
@@ -208,7 +126,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                     throw new InvalidOperationException("User not found");
                 }
 
-                // Determine new status based on current status
+
                 string newStatus;
                 string action;
 

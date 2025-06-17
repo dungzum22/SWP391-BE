@@ -1,5 +1,5 @@
 using Microsoft.IdentityModel.Tokens;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Configuration;
 using PlatformFlower.Services.Common.Logging;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,7 +19,7 @@ namespace PlatformFlower.Services.Auth
             _logger = logger;
         }
 
-        public string GenerateToken(UserResponseDto user)
+        public string GenerateToken(UserResponse user)
         {
             try
             {

@@ -9,7 +9,6 @@ namespace PlatformFlower.Services.Common.Validation
         bool IsModelStateValid(ModelStateDictionary modelState);
         ApiResponse<T> CreateValidationErrorResponse<T>(string message, object errors);
 
-        // Additional validation methods for user registration
         bool IsValidEmail(string email);
         bool IsValidPassword(string password);
         bool IsValidUsername(string username);

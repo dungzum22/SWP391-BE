@@ -105,9 +105,11 @@ namespace PlatformFlower
             // Register Admin services
             builder.Services.AddScoped<PlatformFlower.Services.Admin.UserManagement.IUserManagementService, PlatformFlower.Services.Admin.UserManagement.UserManagementService>();
             builder.Services.AddScoped<PlatformFlower.Services.Admin.CategoryManagement.ICategoryManagementService, PlatformFlower.Services.Admin.CategoryManagement.CategoryManagementService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Seller.FlowerManagement.IFlowerManagementService, PlatformFlower.Services.Seller.FlowerManagement.FlowerManagementService>();
 
             // Register Common services
             builder.Services.AddScoped<PlatformFlower.Services.Common.Category.ICategoryService, PlatformFlower.Services.Common.Category.CategoryService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Common.Flower.IFlowerService, PlatformFlower.Services.Common.Flower.FlowerService>();
 
             // Register Email services
             builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
@@ -116,6 +118,16 @@ namespace PlatformFlower
             // Register Cloudinary services
             builder.Services.AddSingleton<PlatformFlower.Services.Common.Configuration.ICloudinaryConfiguration, PlatformFlower.Services.Common.Configuration.CloudinaryConfiguration>();
             builder.Services.AddScoped<PlatformFlower.Services.Storage.IStorageService, PlatformFlower.Services.Storage.CloudinaryStorageService>();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
 
             var app = builder.Build();
 
@@ -127,6 +139,9 @@ namespace PlatformFlower
             }
 
             app.UseHttpsRedirection();
+
+            app.UseRouting();
+            app.UseCors("AllowAll");
 
             app.UseAuthentication();
             app.UseAuthorization();

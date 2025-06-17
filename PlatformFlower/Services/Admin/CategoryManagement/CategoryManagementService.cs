@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Entities;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Category;
+
 
 namespace PlatformFlower.Services.Admin.CategoryManagement
 {
@@ -13,40 +14,49 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             _context = context;
         }
 
-        public async Task<CategoryResponseDto> ManageCategoryAsync(CategoryManageRequestDto request)
+        public async Task<CategoryResponse> ManageCategoryAsync(CreateCategoryRequest request)
         {
-            // Validate request
-            ValidateRequest(request);
-
-            // Determine operation type
             if (request.CategoryId == null || request.CategoryId == 0)
             {
-                // CREATE operation
+                await CategoryValidation.ValidateCreateCategoryAsync(request, _context);
                 return await CreateCategoryAsync(request);
             }
             else if (request.IsDeleted)
             {
-                // DELETE operation (soft delete)
+                await CategoryValidation.ValidateDeleteCategoryAsync(request.CategoryId.Value, _context);
                 return await DeleteCategoryAsync(request.CategoryId.Value);
             }
             else
             {
-                // UPDATE operation
+                await CategoryValidation.ValidateUpdateCategoryAsync(request, _context);
                 return await UpdateCategoryAsync(request);
             }
         }
 
-        private async Task<CategoryResponseDto> CreateCategoryAsync(CategoryManageRequestDto request)
+        private async Task<CategoryResponse> CreateCategoryAsync(CreateCategoryRequest request)
         {
-            // Check if category name already exists
-            var existingCategory = await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName!.ToLower());
+            var existingActiveCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName!.ToLower()
+                                        && c.Status == "active");
 
-            if (existingCategory != null)
+            if (existingActiveCategory != null)
             {
-                throw new InvalidOperationException($"Category '{request.CategoryName}' already exists");
+                throw new InvalidOperationException($"Category '{request.CategoryName}' already exists and is active");
             }
 
+            var existingInactiveCategory = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName!.ToLower()
+                                        && c.Status == "inactive");
+
+            if (existingInactiveCategory != null)
+            {
+                existingInactiveCategory.Status = "active";
+                existingInactiveCategory.UpdatedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                return await MapToCategoryResponse(existingInactiveCategory);
+            }
             var category = new Category
             {
                 CategoryName = request.CategoryName!,
@@ -58,10 +68,10 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return await MapToCategoryResponseDto(category);
+            return await MapToCategoryResponse(category);
         }
 
-        private async Task<CategoryResponseDto> UpdateCategoryAsync(CategoryManageRequestDto request)
+        private async Task<CategoryResponse> UpdateCategoryAsync(CreateCategoryRequest request)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == request.CategoryId);
@@ -71,16 +81,16 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
                 throw new InvalidOperationException($"Category with ID {request.CategoryId} not found");
             }
 
-            // Check if new name conflicts with existing category (excluding current one)
             if (!string.IsNullOrEmpty(request.CategoryName))
             {
-                var existingCategory = await _context.Categories
-                    .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName.ToLower() 
-                                            && c.CategoryId != request.CategoryId);
+                var existingActiveCategory = await _context.Categories
+                    .FirstOrDefaultAsync(c => c.CategoryName.ToLower() == request.CategoryName.ToLower()
+                                            && c.CategoryId != request.CategoryId
+                                            && c.Status == "active");
 
-                if (existingCategory != null)
+                if (existingActiveCategory != null)
                 {
-                    throw new InvalidOperationException($"Category '{request.CategoryName}' already exists");
+                    throw new InvalidOperationException($"Category '{request.CategoryName}' already exists and is active");
                 }
 
                 category.CategoryName = request.CategoryName;
@@ -95,10 +105,10 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
             await _context.SaveChangesAsync();
 
-            return await MapToCategoryResponseDto(category);
+            return await MapToCategoryResponse(category);
         }
 
-        private async Task<CategoryResponseDto> DeleteCategoryAsync(int categoryId)
+        private async Task<CategoryResponse> DeleteCategoryAsync(int categoryId)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
@@ -108,7 +118,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
                 throw new InvalidOperationException($"Category with ID {categoryId} not found");
             }
 
-            // Check if category has flowers
             var flowerCount = await _context.FlowerInfos
                 .CountAsync(f => f.CategoryId == categoryId);
 
@@ -116,45 +125,43 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             {
                 throw new InvalidOperationException($"Cannot delete category. It contains {flowerCount} flower(s). Please move or delete flowers first.");
             }
-
-            // Soft delete - set status to inactive
             category.Status = "inactive";
             category.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
-            return await MapToCategoryResponseDto(category);
+            return await MapToCategoryResponse(category);
         }
 
-        public async Task<List<CategoryResponseDto>> GetAllCategoriesAsync()
+        public async Task<List<CategoryResponse>> GetAllCategoriesAsync()
         {
             var categories = await _context.Categories
                 .OrderBy(c => c.CategoryName)
                 .ToListAsync();
 
-            var categoryDtos = new List<CategoryResponseDto>();
+            var categoryDtos = new List<CategoryResponse>();
             foreach (var category in categories)
             {
-                categoryDtos.Add(await MapToCategoryResponseDto(category));
+                categoryDtos.Add(await MapToCategoryResponse(category));
             }
 
             return categoryDtos;
         }
 
-        public async Task<CategoryResponseDto?> GetCategoryByIdAsync(int categoryId)
+        public async Task<CategoryResponse?> GetCategoryByIdAsync(int categoryId)
         {
             var category = await _context.Categories
                 .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
 
-            return category == null ? null : await MapToCategoryResponseDto(category);
+            return category == null ? null : await MapToCategoryResponse(category);
         }
 
-        private async Task<CategoryResponseDto> MapToCategoryResponseDto(Category category)
+        private async Task<CategoryResponse> MapToCategoryResponse(Category category)
         {
             var flowerCount = await _context.FlowerInfos
                 .CountAsync(f => f.CategoryId == category.CategoryId);
 
-            return new CategoryResponseDto
+            return new CategoryResponse
             {
                 CategoryId = category.CategoryId,
                 CategoryName = category.CategoryName,
@@ -165,31 +172,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             };
         }
 
-        private static void ValidateRequest(CategoryManageRequestDto request)
-        {
-            // For CREATE operation
-            if (request.CategoryId == null || request.CategoryId == 0)
-            {
-                if (string.IsNullOrWhiteSpace(request.CategoryName))
-                {
-                    throw new ArgumentException("Category name is required for creating a new category");
-                }
-            }
-            // For UPDATE operation
-            else if (!request.IsDeleted)
-            {
-                if (string.IsNullOrWhiteSpace(request.CategoryName) && string.IsNullOrWhiteSpace(request.Status))
-                {
-                    throw new ArgumentException("At least category name or status must be provided for update");
-                }
-            }
 
-            // Validate status if provided
-            if (!string.IsNullOrEmpty(request.Status) && 
-                request.Status != "active" && request.Status != "inactive")
-            {
-                throw new ArgumentException("Status must be either 'active' or 'inactive'");
-            }
-        }
     }
 }

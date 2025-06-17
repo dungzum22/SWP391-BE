@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Seller;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Seller.Profile;
@@ -28,7 +28,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
         }
 
         [HttpGet("profile")]
-        public async Task<ActionResult<ApiResponse<SellerResponseDto>>> GetSellerProfile()
+        public async Task<ActionResult<ApiResponse<SellerProfileResponse>>> GetSellerProfile()
         {
             try
             {
@@ -36,7 +36,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
                     _logger.LogWarning("Invalid user ID in JWT token");
-                    var badRequestResponse = _responseService.CreateErrorResponse<SellerResponseDto>("Invalid token");
+                    var badRequestResponse = _responseService.CreateErrorResponse<SellerProfileResponse>("Invalid token");
                     return BadRequest(badRequestResponse);
                 }
 
@@ -46,17 +46,23 @@ namespace PlatformFlower.Controllers.ProfileSeller
 
                 if (seller == null)
                 {
-                    var notFoundResponse = _responseService.CreateErrorResponse<SellerResponseDto>("Seller profile not found. Please register as a seller first.");
+                    var notFoundResponse = _responseService.CreateErrorResponse<SellerProfileResponse>("Seller profile not found. Please register as a seller first.");
                     return NotFound(notFoundResponse);
                 }
 
                 var response = _responseService.CreateSuccessResponse(seller, "Seller profile retrieved successfully");
                 return Ok(response);
             }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Seller profile retrieval failed - validation error: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(ex.Message);
+                return BadRequest(response);
+            }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during seller profile retrieval: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<SellerResponseDto>(
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(
                     "An unexpected error occurred during seller profile retrieval"
                 );
                 return StatusCode(500, response);
@@ -83,6 +89,12 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 var response = _responseService.CreateSuccessResponse(isSeller,
                     isSeller ? "User is a seller" : "User is not a seller");
                 return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Seller status check failed - validation error: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<bool>(ex.Message);
+                return BadRequest(response);
             }
             catch (Exception ex)
             {

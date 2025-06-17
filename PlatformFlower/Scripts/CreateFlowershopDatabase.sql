@@ -77,11 +77,15 @@ CREATE TABLE Flower_Info (
     price DECIMAL(10, 2) NOT NULL,
     image_url NVARCHAR(255),
     available_quantity INT NOT NULL,
+    status NVARCHAR(20) NOT NULL DEFAULT 'active',
     created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
     category_id INT,
     seller_id INT,
+    is_deleted BIT NOT NULL DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES Category(category_id),
-    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id)
+    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id),
+    CONSTRAINT chk_flower_status CHECK (status IN ('active', 'inactive'))
 );
 GO
 
@@ -91,6 +95,7 @@ CREATE TABLE Cart (
     user_id INT,
     flower_id INT,
     quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (flower_id) REFERENCES Flower_Info(flower_id)
 );
@@ -184,4 +189,32 @@ report_id INT IDENTITY(1,1) PRIMARY KEY,
 );
 GO
 
-PRINT 'Database Flowershop created successfully with password reset functionality!';
+-- Indexes for Flower_Info status and soft delete optimization
+-- Index for public user queries (only active, non-deleted flowers)
+CREATE INDEX IX_FlowerInfo_Public_Display
+ON Flower_Info (is_deleted, status, category_id)
+INCLUDE (flower_name, price, available_quantity, image_url)
+WHERE is_deleted = 0;
+GO
+
+-- Index for seller dashboard (all flowers by seller)
+CREATE INDEX IX_FlowerInfo_Seller_Dashboard
+ON Flower_Info (seller_id, is_deleted, status)
+INCLUDE (flower_name, price, available_quantity, created_at, updated_at);
+GO
+
+-- Index for category filtering (public)
+CREATE INDEX IX_FlowerInfo_Category_Public
+ON Flower_Info (category_id, is_deleted, status)
+INCLUDE (flower_name, price, available_quantity)
+WHERE is_deleted = 0 AND status = 'active';
+GO
+
+-- Index for search and filtering
+CREATE INDEX IX_FlowerInfo_Search_Filter
+ON Flower_Info (is_deleted, status)
+INCLUDE (flower_name, flower_description, price, category_id, seller_id)
+WHERE is_deleted = 0;
+GO
+
+PRINT 'Database Flowershop created successfully with password reset functionality and soft delete support!';

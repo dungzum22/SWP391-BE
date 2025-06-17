@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.Auth;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using PlatformFlower.Services.Common.Validation;
@@ -36,19 +36,13 @@ namespace PlatformFlower.Controllers.Authentication
         /// <param name="loginDto">User login data</param>
         /// <returns>Auth response with JWT token</returns>
         [HttpPost("login")]
-        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginUserDto loginDto)
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest loginDto)
         {
             try
             {
                 _logger.LogInformation($"Login attempt for username: {loginDto?.Username}");
 
-                // Validate model state
-                if (!ModelState.IsValid)
-                {
-                    var validationResponse = _validationService.ValidateModelState<AuthResponseDto>(ModelState);
-                    return BadRequest(validationResponse);
-                }
-
+                // Validation is now handled entirely by AuthValidation class
                 // Call service to handle business logic
                 var authResponse = await _authService.LoginUserAsync(loginDto!);
 
@@ -64,13 +58,13 @@ namespace PlatformFlower.Controllers.Authentication
             catch (UnauthorizedAccessException ex)
             {
                 _logger.LogWarning($"Login failed - unauthorized: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<AuthResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<LoginResponse>(ex.Message);
                 return Unauthorized(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during login: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<AuthResponseDto>(
+                var response = _responseService.CreateErrorResponse<LoginResponse>(
                     "An unexpected error occurred during login"
                 );
                 return StatusCode(500, response);

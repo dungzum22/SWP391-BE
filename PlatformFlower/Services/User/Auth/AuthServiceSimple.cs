@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using PlatformFlower.Models.DTOs;
+
 using PlatformFlower.Services.Common.Configuration;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Validation;
@@ -11,6 +11,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using BCrypt.Net;
+using PlatformFlower.Models.DTOs.Auth;
+using PlatformFlower.Models.DTOs.User;
 
 namespace PlatformFlower.Services.User.Auth
 {
@@ -18,31 +20,28 @@ namespace PlatformFlower.Services.User.Auth
     {
         private readonly FlowershopContext _context;
         private readonly IJwtConfiguration _jwtConfig;
-        private readonly IValidationService _validationService;
         private readonly IEmailService _emailService;
         private readonly IAppLogger _logger;
 
         public AuthServiceSimple(
             FlowershopContext context,
             IJwtConfiguration jwtConfig,
-            IValidationService validationService,
             IEmailService emailService,
             IAppLogger logger)
         {
             _context = context;
             _jwtConfig = jwtConfig;
-            _validationService = validationService;
             _emailService = emailService;
             _logger = logger;
         }
 
-        public async Task<AuthResponseDto> RegisterUserAsync(RegisterUserDto registerDto)
+        public async Task<LoginResponse> RegisterUserAsync(RegisterRequest registerDto)
         {
             try
             {
                 _logger.LogInformation($"Starting user registration for username: {registerDto.Username}");
 
-                await AuthValidation.ValidateRegistrationAsync(registerDto, _context, _validationService);
+                await AuthValidation.ValidateRegistrationAsync(registerDto, _context);
                 var user = new Entities.User
                 {
                     Username = registerDto.Username,
@@ -60,9 +59,9 @@ namespace PlatformFlower.Services.User.Auth
 
                 var token = GenerateJwtToken(user);
 
-                return new AuthResponseDto
+                return new LoginResponse
                 {
-                    User = MapToUserResponseDto(user, null),
+                    User = MapToUserResponse(user, null),
                     Token = token,
                     TokenType = "Bearer",
                     ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtConfig.ExpirationMinutes),
@@ -76,7 +75,7 @@ namespace PlatformFlower.Services.User.Auth
             }
         }
 
-        public async Task<AuthResponseDto> LoginUserAsync(LoginUserDto loginDto)
+        public async Task<LoginResponse> LoginUserAsync(LoginRequest loginDto)
         {
             try
             {
@@ -104,9 +103,9 @@ namespace PlatformFlower.Services.User.Auth
                 var token = GenerateJwtToken(user);
                 var userInfo = user.UserInfos.FirstOrDefault();
 
-                return new AuthResponseDto
+                return new LoginResponse
                 {
-                    User = MapToUserResponseDto(user, userInfo),
+                    User = MapToUserResponse(user, userInfo),
                     Token = token,
                     TokenType = "Bearer",
                     ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtConfig.ExpirationMinutes),
@@ -120,16 +119,20 @@ namespace PlatformFlower.Services.User.Auth
             }
         }
 
-        public async Task<ForgotPasswordResponseDto> ForgotPasswordAsync(string email)
+        public async Task<ForgotPasswordResponse> ForgotPasswordAsync(string email)
         {
             try
             {
                 _logger.LogInformation($"Password reset request for email: {email}");
 
+                // Validate email format
+                var request = new ForgotPasswordRequest { Email = email };
+                AuthValidation.ValidateForgotPassword(request);
+
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
                 if (user == null)
                 {
-                    return new ForgotPasswordResponseDto
+                    return new ForgotPasswordResponse
                     {
                         Success = true,
                         Message = "If email exists, you will receive reset instructions."
@@ -141,7 +144,7 @@ namespace PlatformFlower.Services.User.Auth
                 {
                     _logger.LogWarning($"Password reset denied - account is inactive: {user.Username}");
                     // Return same message for security - don't reveal account status
-                    return new ForgotPasswordResponseDto
+                    return new ForgotPasswordResponse
                     {
                         Success = true,
                         Message = "If email exists, you will receive reset instructions."
@@ -163,7 +166,7 @@ namespace PlatformFlower.Services.User.Auth
 
                 await _emailService.SendEmailAsync(email, emailSubject, emailBody);
 
-                return new ForgotPasswordResponseDto
+                return new ForgotPasswordResponse
                 {
                     Success = true,
                     Message = "Reset instructions sent to your email."
@@ -172,7 +175,7 @@ namespace PlatformFlower.Services.User.Auth
             catch (Exception ex)
             {
                 _logger.LogError($"Error in forgot password: {ex.Message}", ex);
-                return new ForgotPasswordResponseDto
+                return new ForgotPasswordResponse
                 {
                     Success = false,
                     Message = "An error occurred. Please try again."
@@ -180,7 +183,7 @@ namespace PlatformFlower.Services.User.Auth
             }
         }
 
-        public async Task<ForgotPasswordResponseDto> ResetPasswordAsync(ResetPasswordDto resetDto)
+        public async Task<ForgotPasswordResponse> ResetPasswordAsync(ResetPasswordRequest resetDto)
         {
             try
             {
@@ -189,7 +192,7 @@ namespace PlatformFlower.Services.User.Auth
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.ResetPasswordToken == resetDto.Token);
                 if (user == null || user.ResetPasswordTokenExpiry < DateTime.UtcNow)
                 {
-                    return new ForgotPasswordResponseDto
+                    return new ForgotPasswordResponse
                     {
                         Success = false,
                         Message = "Invalid or expired reset token."
@@ -200,7 +203,7 @@ namespace PlatformFlower.Services.User.Auth
                 if (user.Status != "active")
                 {
                     _logger.LogWarning($"Password reset denied - account is inactive: {user.Username}");
-                    return new ForgotPasswordResponseDto
+                    return new ForgotPasswordResponse
                     {
                         Success = false,
                         Message = "Account is not active. Please contact support."
@@ -213,7 +216,7 @@ namespace PlatformFlower.Services.User.Auth
 
                 await _context.SaveChangesAsync();
 
-                return new ForgotPasswordResponseDto
+                return new ForgotPasswordResponse
                 {
                     Success = true,
                     Message = "Password reset successfully."
@@ -222,7 +225,7 @@ namespace PlatformFlower.Services.User.Auth
             catch (Exception ex)
             {
                 _logger.LogError($"Error in reset password: {ex.Message}", ex);
-                return new ForgotPasswordResponseDto
+                return new ForgotPasswordResponse
                 {
                     Success = false,
                     Message = "An error occurred. Please try again."
@@ -342,9 +345,9 @@ namespace PlatformFlower.Services.User.Auth
             return Convert.ToBase64String(tokenBytes).Replace("+", "").Replace("/", "").Replace("=", "")[..8].ToUpper();
         }
 
-        private static UserResponseDto MapToUserResponseDto(Entities.User user, UserInfo? userInfo)
+        private static UserResponse MapToUserResponse(Entities.User user, Entities.UserInfo? userInfo)
         {
-            return new UserResponseDto
+            return new UserResponse
             {
                 UserId = user.UserId,
                 Username = user.Username,
@@ -352,7 +355,7 @@ namespace PlatformFlower.Services.User.Auth
                 Type = user.Type,
                 CreatedDate = user.CreatedDate,
                 Status = user.Status,
-                UserInfo = userInfo != null ? new UserInfoDto
+                UserInfo = userInfo != null ? new Models.DTOs.User.UserInfo
                 {
                     UserInfoId = userInfo.UserInfoId,
                     FullName = userInfo.FullName,

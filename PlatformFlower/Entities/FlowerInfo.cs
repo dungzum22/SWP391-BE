@@ -17,11 +17,17 @@ public partial class FlowerInfo
 
     public int AvailableQuantity { get; set; }
 
+    public string Status { get; set; } = "active";
+
     public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
     public int? CategoryId { get; set; }
 
     public int? SellerId { get; set; }
+
+    public bool IsDeleted { get; set; } = false;
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 

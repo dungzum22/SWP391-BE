@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlatformFlower.Models;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Admin.UserManagement;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
@@ -32,7 +32,7 @@ namespace PlatformFlower.Controllers.AdminUserManagement
         }
 
         [HttpPut("users/{id}/toggle-status")]
-        public async Task<ActionResult<ApiResponse<UserDetailResponseDto>>> ToggleUserStatus(int id, [FromBody] UserStatusUpdateDto statusRequest)
+        public async Task<ActionResult<ApiResponse<UserDetailResponse>>> ToggleUserStatus(int id, [FromBody] UserStatusUpdate statusRequest)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace PlatformFlower.Controllers.AdminUserManagement
 
                 if (!ModelState.IsValid)
                 {
-                    var validationResponse = _validationService.ValidateModelState<UserDetailResponseDto>(ModelState);
+                    var validationResponse = _validationService.ValidateModelState<UserDetailResponse>(ModelState);
                     return BadRequest(validationResponse);
                 }
 
@@ -52,13 +52,13 @@ namespace PlatformFlower.Controllers.AdminUserManagement
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning($"Toggle user status failed - business rule violation: {ex.Message}");
-                var response = _responseService.CreateErrorResponse<UserDetailResponseDto>(ex.Message);
+                var response = _responseService.CreateErrorResponse<UserDetailResponse>(ex.Message);
                 return Conflict(response);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error toggling user status for ID {id}: {ex.Message}", ex);
-                var response = _responseService.CreateErrorResponse<UserDetailResponseDto>(
+                var response = _responseService.CreateErrorResponse<UserDetailResponse>(
                     "An error occurred while updating user status"
                 );
                 return StatusCode(500, response);

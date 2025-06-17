@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Entities;
-using PlatformFlower.Models.DTOs;
+using PlatformFlower.Models.DTOs.User;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Storage;
 
@@ -22,7 +22,7 @@ namespace PlatformFlower.Services.User.Profile
             _logger = logger;
         }
 
-        public async Task<UserResponseDto?> GetUserByIdAsync(int userId)
+        public async Task<UserResponse?> GetUserByIdAsync(int userId)
         {
             var user = await _context.Users
                 .Include(u => u.UserInfos)
@@ -31,10 +31,10 @@ namespace PlatformFlower.Services.User.Profile
             if (user == null) return null;
 
             var userInfo = user.UserInfos.FirstOrDefault();
-            return MapToUserResponseDto(user, userInfo);
+            return MapToUserResponse(user, userInfo);
         }
 
-        public async Task<UserResponseDto?> GetUserByUsernameAsync(string username)
+        public async Task<UserResponse?> GetUserByUsernameAsync(string username)
         {
             var user = await _context.Users
                 .Include(u => u.UserInfos)
@@ -43,10 +43,10 @@ namespace PlatformFlower.Services.User.Profile
             if (user == null) return null;
 
             var userInfo = user.UserInfos.FirstOrDefault();
-            return MapToUserResponseDto(user, userInfo);
+            return MapToUserResponse(user, userInfo);
         }
 
-        public async Task<UserResponseDto> UpdateUserInfoAsync(int userId, UpdateUserInfoDto updateDto)
+        public async Task<UserResponse> UpdateUserInfoAsync(int userId, UpdateUserRequest updateDto)
         {
             try
             {
@@ -67,7 +67,7 @@ namespace PlatformFlower.Services.User.Profile
                 var userInfo = user.UserInfos.FirstOrDefault();
                 if (userInfo == null)
                 {
-                    userInfo = new UserInfo
+                    userInfo = new Entities.UserInfo
                     {
                         UserId = userId,
                         Points = 100,
@@ -119,7 +119,7 @@ namespace PlatformFlower.Services.User.Profile
 
                 _logger.LogInformation($"User info updated successfully for user ID: {userId}");
 
-                return MapToUserResponseDto(user, userInfo);
+                return MapToUserResponse(user, userInfo);
             }
             catch (Exception ex)
             {
@@ -130,9 +130,9 @@ namespace PlatformFlower.Services.User.Profile
 
 
 
-        private static UserResponseDto MapToUserResponseDto(Entities.User user, UserInfo? userInfo)
+        private static UserResponse MapToUserResponse(Entities.User user, Entities.UserInfo? userInfo)
         {
-            return new UserResponseDto
+            return new UserResponse
             {
                 UserId = user.UserId,
                 Username = user.Username,
@@ -140,7 +140,7 @@ namespace PlatformFlower.Services.User.Profile
                 Type = user.Type,
                 CreatedDate = user.CreatedDate,
                 Status = user.Status,
-                UserInfo = userInfo != null ? new UserInfoDto
+                UserInfo = userInfo != null ? new Models.DTOs.User.UserInfo
                 {
                     UserInfoId = userInfo.UserInfoId,
                     FullName = userInfo.FullName,

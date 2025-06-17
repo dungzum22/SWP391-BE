@@ -13,6 +13,8 @@ public partial class Cart
 
     public int Quantity { get; set; }
 
+    public decimal UnitPrice { get; set; }
+
     public virtual FlowerInfo? Flower { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

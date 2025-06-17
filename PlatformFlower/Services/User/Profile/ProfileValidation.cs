@@ -1,11 +1,12 @@
-using PlatformFlower.Models.DTOs;
+
+using PlatformFlower.Models.DTOs.User;
 using System.Security;
 
 namespace PlatformFlower.Services.User.Profile
 {
     public static class ProfileValidation
     {
-        public static void ValidateProfileUpdate(UpdateUserInfoDto updateDto)
+        public static void ValidateProfileUpdate(UpdateUserRequest updateDto)
         {
             var dtoType = updateDto.GetType();
             var properties = dtoType.GetProperties();
@@ -35,9 +36,9 @@ namespace PlatformFlower.Services.User.Profile
                 throw new ArgumentException("Birth date cannot be in the future");
             }
 
-            if (updateDto.Sex != null && !new[] { "Male", "Female", "Other" }.Contains(updateDto.Sex))
+            if (updateDto.Sex != null && !new[] { "male", "female", "other" }.Contains(updateDto.Sex))
             {
-                throw new ArgumentException("Invalid sex value. Must be Male, Female, or Other");
+                throw new ArgumentException("Invalid sex value. Must be male, female, or other");
             }
         }
 
