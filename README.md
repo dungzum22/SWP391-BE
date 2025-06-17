@@ -55,17 +55,32 @@ This project provides a RESTful API for a flower shop e-commerce platform. It ha
      "DefaultConnection": "Data Source=(local);Initial Catalog=Flowershop;Persist Security Info=True;User ID=sa;Password=123;Encrypt=True;Trust Server Certificate=True"
    }
    ```
-5. Apply database migrations:
+
+5. **Setup Development Configuration** (Important for security):
+
+   Copy the template file and add your sensitive information:
+   ```bash
+   cp PlatformFlower/appsettings.Development.template.json PlatformFlower/appsettings.Development.json
+   ```
+
+   Then edit `PlatformFlower/appsettings.Development.json` with your actual credentials:
+   - Email settings (Gmail app password)
+   - Cloudinary API credentials
+   - Any other sensitive configuration
+
+   **Note**: Never commit `appsettings.Development.json` to Git as it contains sensitive information.
+
+6. Apply database migrations:
 
    ```
    dotnet ef database update
    ```
-6. Run the application:
+7. Run the application:
 
    ```
    dotnet run --project PlatformFlower
    ```
-7. Access the API:
+8. Access the API:
 
    - HTTP: http://localhost:5116
    - HTTPS: https://localhost:7274
