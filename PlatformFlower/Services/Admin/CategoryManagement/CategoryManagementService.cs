@@ -16,23 +16,23 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
         public async Task<CategoryResponse> ManageCategoryAsync(CreateCategoryRequest request)
         {
-            // Validate request
-            ValidateRequest(request);
-
-            // Determine operation type
+            // Determine operation type and validate accordingly
             if (request.CategoryId == null || request.CategoryId == 0)
             {
                 // CREATE operation
+                await CategoryValidation.ValidateCreateCategoryAsync(request, _context);
                 return await CreateCategoryAsync(request);
             }
             else if (request.IsDeleted)
             {
                 // DELETE operation (soft delete)
+                await CategoryValidation.ValidateDeleteCategoryAsync(request.CategoryId.Value, _context);
                 return await DeleteCategoryAsync(request.CategoryId.Value);
             }
             else
             {
                 // UPDATE operation
+                await CategoryValidation.ValidateUpdateCategoryAsync(request, _context);
                 return await UpdateCategoryAsync(request);
             }
         }
@@ -176,28 +176,6 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
             };
         }
 
-        private static void ValidateRequest(CreateCategoryRequest request)
-        {
-            if (request.CategoryId == null || request.CategoryId == 0)
-            {
-                if (string.IsNullOrWhiteSpace(request.CategoryName))
-                {
-                    throw new ArgumentException("Category name is required for creating a new category");
-                }
-            }
-            else if (!request.IsDeleted)
-            {
-                if (string.IsNullOrWhiteSpace(request.CategoryName) && string.IsNullOrWhiteSpace(request.Status))
-                {
-                    throw new ArgumentException("At least category name or status must be provided for update");
-                }
-            }
 
-            if (!string.IsNullOrEmpty(request.Status) &&
-                request.Status != "active" && request.Status != "inactive")
-            {
-                throw new ArgumentException("Status must be either 'active' or 'inactive'");
-            }
-        }
     }
 }
