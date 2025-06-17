@@ -20,20 +20,17 @@ namespace PlatformFlower.Services.User.Auth
     {
         private readonly FlowershopContext _context;
         private readonly IJwtConfiguration _jwtConfig;
-        private readonly IValidationService _validationService;
         private readonly IEmailService _emailService;
         private readonly IAppLogger _logger;
 
         public AuthServiceSimple(
             FlowershopContext context,
             IJwtConfiguration jwtConfig,
-            IValidationService validationService,
             IEmailService emailService,
             IAppLogger logger)
         {
             _context = context;
             _jwtConfig = jwtConfig;
-            _validationService = validationService;
             _emailService = emailService;
             _logger = logger;
         }
@@ -44,7 +41,7 @@ namespace PlatformFlower.Services.User.Auth
             {
                 _logger.LogInformation($"Starting user registration for username: {registerDto.Username}");
 
-                await AuthValidation.ValidateRegistrationAsync(registerDto, _context, _validationService);
+                await AuthValidation.ValidateRegistrationAsync(registerDto, _context);
                 var user = new Entities.User
                 {
                     Username = registerDto.Username,
@@ -127,6 +124,10 @@ namespace PlatformFlower.Services.User.Auth
             try
             {
                 _logger.LogInformation($"Password reset request for email: {email}");
+
+                // Validate email format
+                var request = new ForgotPasswordRequest { Email = email };
+                AuthValidation.ValidateForgotPassword(request);
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
                 if (user == null)

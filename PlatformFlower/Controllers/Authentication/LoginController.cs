@@ -42,13 +42,7 @@ namespace PlatformFlower.Controllers.Authentication
             {
                 _logger.LogInformation($"Login attempt for username: {loginDto?.Username}");
 
-                // Validate model state
-                if (!ModelState.IsValid)
-                {
-                    var validationResponse = _validationService.ValidateModelState<LoginResponse>(ModelState);
-                    return BadRequest(validationResponse);
-                }
-
+                // Validation is now handled entirely by AuthValidation class
                 // Call service to handle business logic
                 var authResponse = await _authService.LoginUserAsync(loginDto!);
 
