@@ -105,9 +105,11 @@ namespace PlatformFlower
             // Register Admin services
             builder.Services.AddScoped<PlatformFlower.Services.Admin.UserManagement.IUserManagementService, PlatformFlower.Services.Admin.UserManagement.UserManagementService>();
             builder.Services.AddScoped<PlatformFlower.Services.Admin.CategoryManagement.ICategoryManagementService, PlatformFlower.Services.Admin.CategoryManagement.CategoryManagementService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Seller.FlowerManagement.IFlowerManagementService, PlatformFlower.Services.Seller.FlowerManagement.FlowerManagementService>();
 
             // Register Common services
             builder.Services.AddScoped<PlatformFlower.Services.Common.Category.ICategoryService, PlatformFlower.Services.Common.Category.CategoryService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Common.Flower.IFlowerService, PlatformFlower.Services.Common.Flower.FlowerService>();
 
             // Register Email services
             builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
