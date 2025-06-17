@@ -53,6 +53,12 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 var response = _responseService.CreateSuccessResponse(seller, "Seller profile retrieved successfully");
                 return Ok(response);
             }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Seller profile retrieval failed - validation error: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(ex.Message);
+                return BadRequest(response);
+            }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during seller profile retrieval: {ex.Message}", ex);
@@ -83,6 +89,12 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 var response = _responseService.CreateSuccessResponse(isSeller,
                     isSeller ? "User is a seller" : "User is not a seller");
                 return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Seller status check failed - validation error: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<bool>(ex.Message);
+                return BadRequest(response);
             }
             catch (Exception ex)
             {
