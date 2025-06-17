@@ -45,6 +45,12 @@ namespace PlatformFlower.Controllers.ProfileSeller
                 var response = _responseService.CreateSuccessResponse(seller, "Seller retrieved successfully");
                 return Ok(response);
             }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Seller retrieval failed - validation error: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(ex.Message);
+                return BadRequest(response);
+            }
             catch (Exception ex)
             {
                 _logger.LogError($"Unexpected error during seller retrieval: {ex.Message}", ex);

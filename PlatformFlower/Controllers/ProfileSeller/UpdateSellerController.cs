@@ -4,7 +4,6 @@ using PlatformFlower.Models;
 using PlatformFlower.Models.DTOs.Seller;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
-using PlatformFlower.Services.Common.Validation;
 using PlatformFlower.Services.Seller.Profile;
 
 namespace PlatformFlower.Controllers.ProfileSeller
@@ -16,18 +15,15 @@ namespace PlatformFlower.Controllers.ProfileSeller
     {
         private readonly ISellerProfileService _sellerService;
         private readonly IResponseService _responseService;
-        private readonly IValidationService _validationService;
         private readonly IAppLogger _logger;
 
         public UpdateSellerController(
             ISellerProfileService sellerService,
             IResponseService responseService,
-            IValidationService validationService,
             IAppLogger logger)
         {
             _sellerService = sellerService;
             _responseService = responseService;
-            _validationService = validationService;
             _logger = logger;
         }
 
@@ -46,11 +42,7 @@ namespace PlatformFlower.Controllers.ProfileSeller
 
                 _logger.LogInformation($"Seller profile upsert attempt for user ID: {userId}");
 
-                if (!ModelState.IsValid)
-                {
-                    var validationResponse = _validationService.ValidateModelState<SellerProfileResponse>(ModelState);
-                    return BadRequest(validationResponse);
-                }
+
 
                 var isExistingSeller = await _sellerService.IsUserSellerAsync(userId);
                 var sellerResponse = await _sellerService.UpsertSellerAsync(userId, sellerDto);
@@ -63,6 +55,12 @@ namespace PlatformFlower.Controllers.ProfileSeller
 
                 _logger.LogInformation($"Seller profile upserted successfully for user ID: {userId}, seller ID: {sellerResponse.SellerId}");
                 return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Seller profile upsert failed - validation error: {ex.Message}");
+                var response = _responseService.CreateErrorResponse<SellerProfileResponse>(ex.Message);
+                return BadRequest(response);
             }
             catch (InvalidOperationException ex)
             {
