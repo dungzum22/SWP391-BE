@@ -24,11 +24,6 @@ namespace PlatformFlower.Controllers.Authentication
             _logger = logger;
         }
 
-        /// <summary>
-        /// Check if username is available
-        /// </summary>
-        /// <param name="username">Username to check</param>
-        /// <returns>Availability status</returns>
         [HttpGet("check-username/{username}")]
         public async Task<ActionResult<ApiResponse<bool>>> CheckUsernameAvailability(string username)
         {
@@ -56,11 +51,6 @@ namespace PlatformFlower.Controllers.Authentication
             }
         }
 
-        /// <summary>
-        /// Check if email is available
-        /// </summary>
-        /// <param name="email">Email to check</param>
-        /// <returns>Availability status</returns>
         [HttpGet("check-email")]
         public async Task<ActionResult<ApiResponse<bool>>> CheckEmailAvailability([FromQuery] string email)
         {

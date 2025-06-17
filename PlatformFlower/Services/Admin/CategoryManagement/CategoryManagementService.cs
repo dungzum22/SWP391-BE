@@ -16,22 +16,18 @@ namespace PlatformFlower.Services.Admin.CategoryManagement
 
         public async Task<CategoryResponse> ManageCategoryAsync(CreateCategoryRequest request)
         {
-            // Determine operation type and validate accordingly
             if (request.CategoryId == null || request.CategoryId == 0)
             {
-                // CREATE operation
                 await CategoryValidation.ValidateCreateCategoryAsync(request, _context);
                 return await CreateCategoryAsync(request);
             }
             else if (request.IsDeleted)
             {
-                // DELETE operation (soft delete)
                 await CategoryValidation.ValidateDeleteCategoryAsync(request.CategoryId.Value, _context);
                 return await DeleteCategoryAsync(request.CategoryId.Value);
             }
             else
             {
-                // UPDATE operation
                 await CategoryValidation.ValidateUpdateCategoryAsync(request, _context);
                 return await UpdateCategoryAsync(request);
             }

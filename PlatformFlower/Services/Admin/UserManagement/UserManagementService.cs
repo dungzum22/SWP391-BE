@@ -40,7 +40,6 @@ namespace PlatformFlower.Services.Admin.UserManagement
 
                 if (isActive.HasValue)
                 {
-                    // Use Status field to determine if user is active
                     if (isActive.Value)
                     {
                         query = query.Where(u => u.Status == "active" || u.Status == null);
@@ -65,12 +64,12 @@ namespace PlatformFlower.Services.Admin.UserManagement
                         Email = u.Email,
                         Type = u.Type,
                         CreatedAt = u.CreatedDate,
-                        UpdatedAt = u.CreatedDate, // Use CreatedDate as UpdatedAt since no UpdatedAt field
+                        UpdatedAt = u.CreatedDate,
                         IsActive = u.Status == "active" || u.Status == null,
                         UserInfo = u.UserInfos.Any() ? new UserInfoManagement
                         {
                             FullName = u.UserInfos.First().FullName,
-                            Phone = null, // UserInfo doesn't have Phone field
+                            Phone = null,
                             Address = u.UserInfos.First().Address,
                             DateOfBirth = u.UserInfos.First().BirthDate.HasValue ? u.UserInfos.First().BirthDate.Value.ToDateTime(TimeOnly.MinValue) : null,
                             Gender = u.UserInfos.First().Sex,
@@ -166,12 +165,12 @@ namespace PlatformFlower.Services.Admin.UserManagement
                     Email = user.Email,
                     Type = user.Type,
                     CreatedAt = user.CreatedDate,
-                    UpdatedAt = user.CreatedDate, // Use CreatedDate as UpdatedAt
+                    UpdatedAt = user.CreatedDate,
                     IsActive = user.Status == "active" || user.Status == null,
                     UserInfo = userInfo != null ? new UserInfoManagement
                     {
                         FullName = userInfo.FullName,
-                        Phone = null, // UserInfo doesn't have Phone field
+                        Phone = null,
                         Address = userInfo.Address,
                         DateOfBirth = userInfo.BirthDate?.ToDateTime(TimeOnly.MinValue),
                         Gender = userInfo.Sex,
@@ -208,7 +207,7 @@ namespace PlatformFlower.Services.Admin.UserManagement
                     throw new InvalidOperationException("User not found");
                 }
 
-                // Determine new status based on current status
+
                 string newStatus;
                 string action;
 

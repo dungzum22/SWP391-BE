@@ -17,7 +17,6 @@ namespace PlatformFlower.Models.DTOs.User
 
         public bool? IsSeller { get; set; }
 
-        // Avatar will be uploaded separately via file upload
         public IFormFile? Avatar { get; set; }
     }
 }
