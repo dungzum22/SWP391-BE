@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Models.DTOs.Flower;
 
-namespace PlatformFlower.Services.Admin.FlowerManagement
+namespace PlatformFlower.Services.Seller.FlowerManagement
 {
     public static class FlowerValidation
     {
@@ -42,12 +42,12 @@ namespace PlatformFlower.Services.Admin.FlowerManagement
         public static async Task ValidateDeleteFlowerAsync(int flowerId, FlowershopContext context, int? currentSellerId = null)
         {
             await ValidateFlowerExists(flowerId, context);
-
+            
             if (currentSellerId.HasValue)
             {
                 await ValidateSellerOwnership(flowerId, currentSellerId.Value, context);
             }
-
+            
             await ValidateFlowerNotInActiveOrders(flowerId, context);
         }
 

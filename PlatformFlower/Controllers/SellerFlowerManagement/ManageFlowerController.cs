@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Models;
 using PlatformFlower.Models.DTOs.Flower;
-using PlatformFlower.Services.Admin.FlowerManagement;
+using PlatformFlower.Services.Seller.FlowerManagement;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Common.Response;
 using System.Security.Claims;

@@ -1,6 +1,6 @@
 using PlatformFlower.Models.DTOs.Flower;
 
-namespace PlatformFlower.Services.Admin.FlowerManagement
+namespace PlatformFlower.Services.Seller.FlowerManagement
 {
     public interface IFlowerManagementService
     {

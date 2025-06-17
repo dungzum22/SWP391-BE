@@ -3,7 +3,7 @@ using PlatformFlower.Entities;
 using PlatformFlower.Models.DTOs.Flower;
 using PlatformFlower.Services.Storage;
 
-namespace PlatformFlower.Services.Admin.FlowerManagement
+namespace PlatformFlower.Services.Seller.FlowerManagement
 {
     public class FlowerManagementService : IFlowerManagementService
     {
@@ -69,8 +69,8 @@ namespace PlatformFlower.Services.Admin.FlowerManagement
         private async Task<FlowerResponse> CreateFlowerAsync(CreateFlowerRequest request)
         {
             var existingInactiveFlower = await _context.FlowerInfos
-                .FirstOrDefaultAsync(f => f.FlowerName.ToLower() == request.FlowerName!.ToLower()
-                                         && f.Status == "inactive"
+                .FirstOrDefaultAsync(f => f.FlowerName.ToLower() == request.FlowerName!.ToLower() 
+                                         && f.Status == "inactive" 
                                          && !f.IsDeleted);
 
             string? imageUrl = request.ImageUrl;
@@ -221,7 +221,5 @@ namespace PlatformFlower.Services.Admin.FlowerManagement
                 IsDeleted = flower.IsDeleted
             };
         }
-
-
     }
 }
