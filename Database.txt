@@ -95,6 +95,7 @@ CREATE TABLE Cart (
     user_id INT,
     flower_id INT,
     quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (flower_id) REFERENCES Flower_Info(flower_id)
 );
