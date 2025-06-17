@@ -71,6 +71,9 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.CartId).HasColumnName("cart_id");
             entity.Property(e => e.FlowerId).HasColumnName("flower_id");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("unit_price");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
             entity.HasOne(d => d.Flower).WithMany(p => p.Carts)
