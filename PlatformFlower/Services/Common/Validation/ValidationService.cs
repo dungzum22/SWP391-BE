@@ -10,7 +10,7 @@ namespace PlatformFlower.Services.Common.Validation
         {
             if (IsModelStateValid(modelState))
             {
-                return null!; // No validation errors
+                return null!;
             }
 
             var errors = ExtractModelStateErrors(modelState);
@@ -41,8 +41,6 @@ namespace PlatformFlower.Services.Common.Validation
             if (string.IsNullOrWhiteSpace(password))
                 return false;
 
-            // Password must be at least 6 characters long
-            // Can add more complex rules here (uppercase, lowercase, numbers, special chars)
             return password.Length >= 6;
         }
 
@@ -51,7 +49,6 @@ namespace PlatformFlower.Services.Common.Validation
             if (string.IsNullOrWhiteSpace(username))
                 return false;
 
-            // Username must be 3-255 characters, alphanumeric and underscore only
             var usernameRegex = new Regex(@"^[a-zA-Z0-9_]{3,255}$");
             return usernameRegex.IsMatch(username);
         }

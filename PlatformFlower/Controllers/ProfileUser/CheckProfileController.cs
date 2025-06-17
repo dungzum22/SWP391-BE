@@ -27,16 +27,11 @@ namespace PlatformFlower.Controllers.ProfileUser
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get current user's profile information
-        /// </summary>
-        /// <returns>Current user information</returns>
         [HttpGet("profile")]
         public async Task<ActionResult<ApiResponse<UserResponse>>> GetProfile()
         {
             try
             {
-                // Get user ID from JWT token claims
                 var userIdClaim = User.FindFirst("user_id")?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {

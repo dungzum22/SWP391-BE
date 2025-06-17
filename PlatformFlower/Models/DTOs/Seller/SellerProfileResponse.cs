@@ -12,7 +12,6 @@ namespace PlatformFlower.Models.DTOs.Seller
         public string Role { get; set; } = null!;
         public string? Introduction { get; set; }
         
-        // Include user information for convenience
         public User.UserResponse? User { get; set; }
     }
 }

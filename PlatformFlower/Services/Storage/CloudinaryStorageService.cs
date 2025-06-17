@@ -19,7 +19,6 @@ namespace PlatformFlower.Services.Storage
             _cloudinaryConfig = cloudinaryConfig;
             _logger = logger;
 
-            // Initialize Cloudinary
             var account = new Account(
                 _cloudinaryConfig.CloudName,
                 _cloudinaryConfig.ApiKey,
@@ -37,18 +36,15 @@ namespace PlatformFlower.Services.Storage
                 if (file == null || file.Length == 0)
                     throw new ArgumentException("File is empty or null");
 
-                // Validate file type (images only)
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
                 var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
                 
                 if (!allowedExtensions.Contains(fileExtension))
                     throw new ArgumentException($"File type {fileExtension} is not allowed. Only images are supported.");
 
-                // Validate file size (max 5MB)
                 if (file.Length > 5 * 1024 * 1024)
                     throw new ArgumentException("File size cannot exceed 5MB");
 
-                // Generate unique filename
                 var fileName = $"{Guid.NewGuid()}{fileExtension}";
                 var publicId = $"{folder.Trim('/')}/{Path.GetFileNameWithoutExtension(fileName)}";
 
@@ -95,7 +91,7 @@ namespace PlatformFlower.Services.Storage
             try
             {
                 if (string.IsNullOrEmpty(fileUrl))
-                    return true; // Nothing to delete
+                    return true;
 
                 var publicId = ExtractPublicIdFromUrl(fileUrl);
                 if (string.IsNullOrEmpty(publicId))
@@ -160,20 +156,16 @@ namespace PlatformFlower.Services.Storage
         {
             try
             {
-                // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
                 var uri = new Uri(fileUrl);
                 var pathSegments = uri.AbsolutePath.Split('/');
                 
-                // Find the upload segment
                 var uploadIndex = Array.IndexOf(pathSegments, "upload");
                 if (uploadIndex == -1 || uploadIndex + 2 >= pathSegments.Length)
                     return string.Empty;
 
-                // Get everything after version (v{number})
                 var publicIdParts = pathSegments.Skip(uploadIndex + 2).ToArray();
                 var publicIdWithExtension = string.Join("/", publicIdParts);
                 
-                // Remove file extension
                 var lastDotIndex = publicIdWithExtension.LastIndexOf('.');
                 if (lastDotIndex > 0)
                     return publicIdWithExtension.Substring(0, lastDotIndex);

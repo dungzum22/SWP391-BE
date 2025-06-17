@@ -75,7 +75,6 @@ namespace PlatformFlower.Services.Common.Category
             {
                 _logger.LogInformation("Getting top 3 most popular active categories for header display");
 
-                // Get categories with flower count, filter active only, order by flower count desc then by name asc
                 var topCategories = await _context.Categories
                     .Where(c => c.Status == "active")
                     .Select(c => new

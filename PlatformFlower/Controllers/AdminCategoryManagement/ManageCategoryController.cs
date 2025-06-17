@@ -32,7 +32,6 @@ namespace PlatformFlower.Controllers.AdminCategoryManagement
         {
             try
             {
-                // Determine operation type for logging
                 string operationType = request.CategoryId == null || request.CategoryId == 0
                     ? "CREATE"
                     : request.IsDeleted
@@ -43,13 +42,11 @@ namespace PlatformFlower.Controllers.AdminCategoryManagement
 
                 var result = await _categoryManagementService.ManageCategoryAsync(request);
 
-                // Determine operation type for response message
                 string operation;
                 string message;
 
                 if (request.CategoryId == null || request.CategoryId == 0)
                 {
-                    // For CREATE operation, check if it was a reactivation
                     operation = "created";
                     message = result.CreatedAt < result.UpdatedAt
                         ? "Category reactivated successfully (was previously inactive)"
