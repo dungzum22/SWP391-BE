@@ -70,6 +70,36 @@ namespace PlatformFlower.Services.Seller.FlowerManagement
                 if (!request.SellerId.HasValue)
                     throw new ArgumentException("Seller ID is required");
             }
+
+            ValidateImageData(request);
+        }
+
+        private static void ValidateImageData(CreateFlowerRequest request)
+        {
+            if (request.ImageFile != null)
+            {
+                if (request.ImageFile.Length == 0)
+                    throw new ArgumentException("Image file cannot be empty");
+
+                if (request.ImageFile.Length > 5 * 1024 * 1024)
+                    throw new ArgumentException("Image file size cannot exceed 5MB");
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var fileExtension = Path.GetExtension(request.ImageFile.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                    throw new ArgumentException($"Image file type {fileExtension} is not allowed. Only JPG, PNG, GIF, and WebP are supported");
+
+                var allowedContentTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
+                if (!allowedContentTypes.Contains(request.ImageFile.ContentType.ToLowerInvariant()))
+                    throw new ArgumentException($"Image content type {request.ImageFile.ContentType} is not allowed");
+            }
+            else if (!string.IsNullOrEmpty(request.ImageUrl))
+            {
+                if (!Uri.TryCreate(request.ImageUrl, UriKind.Absolute, out var uri) ||
+                    (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                    throw new ArgumentException("Image URL must be a valid HTTP or HTTPS URL");
+            }
             else
             {
                 if (request.FlowerId == null || request.FlowerId <= 0)

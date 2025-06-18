@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Entities;
 using PlatformFlower.Models.DTOs.Flower;
 using PlatformFlower.Services.Storage;
+using PlatformFlower.Services.Common.Logging;
 
 namespace PlatformFlower.Services.Seller.FlowerManagement
 {
@@ -9,11 +10,13 @@ namespace PlatformFlower.Services.Seller.FlowerManagement
     {
         private readonly FlowershopContext _context;
         private readonly IStorageService _storageService;
+        private readonly IAppLogger _logger;
 
-        public FlowerManagementService(FlowershopContext context, IStorageService storageService)
+        public FlowerManagementService(FlowershopContext context, IStorageService storageService, IAppLogger logger)
         {
             _context = context;
             _storageService = storageService;
+            _logger = logger;
         }
 
         public async Task<FlowerResponse> ManageFlowerAsync(CreateFlowerRequest request, int? currentSellerId = null)
@@ -74,9 +77,29 @@ namespace PlatformFlower.Services.Seller.FlowerManagement
                                          && !f.IsDeleted);
 
             string? imageUrl = request.ImageUrl;
+            _logger.LogInformation($"Processing image for flower creation - ImageFile: {(request.ImageFile != null ? $"Present ({request.ImageFile.Length} bytes, {request.ImageFile.FileName})" : "None")}, ImageUrl: {(string.IsNullOrEmpty(request.ImageUrl) ? "None" : request.ImageUrl)}");
+
             if (request.ImageFile != null)
             {
-                imageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
+                try
+                {
+                    _logger.LogInformation($"Uploading image file to storage: {request.ImageFile.FileName}");
+                    imageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
+                    _logger.LogInformation($"Image uploaded successfully: {imageUrl}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Failed to upload image file: {ex.Message}", ex);
+                    throw new InvalidOperationException($"Failed to upload image: {ex.Message}");
+                }
+            }
+            else if (!string.IsNullOrEmpty(request.ImageUrl))
+            {
+                _logger.LogInformation($"Using provided image URL: {request.ImageUrl}");
+            }
+            else
+            {
+                _logger.LogInformation("No image provided for flower creation");
             }
 
             if (existingInactiveFlower != null)
@@ -136,10 +159,22 @@ namespace PlatformFlower.Services.Seller.FlowerManagement
 
             if (request.ImageFile != null)
             {
-                flower.ImageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
+                try
+                {
+                    _logger.LogInformation($"Updating flower image with file upload: {request.ImageFile.FileName} ({request.ImageFile.Length} bytes)");
+                    var newImageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
+                    _logger.LogInformation($"Image uploaded successfully, updating from '{flower.ImageUrl}' to '{newImageUrl}'");
+                    flower.ImageUrl = newImageUrl;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Failed to upload image file during update: {ex.Message}", ex);
+                    throw new InvalidOperationException($"Failed to upload image: {ex.Message}");
+                }
             }
             else if (request.ImageUrl != null)
             {
+                _logger.LogInformation($"Updating flower image with URL: from '{flower.ImageUrl}' to '{request.ImageUrl}'");
                 flower.ImageUrl = request.ImageUrl;
             }
 
