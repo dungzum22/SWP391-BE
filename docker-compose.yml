@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # SQL Server Database
   sqlserver:
@@ -13,7 +11,7 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
-      - ./Scripts:/docker-entrypoint-initdb.d
+      - ./PlatformFlower/Scripts:/docker-entrypoint-initdb.d
     networks:
       - platformflower-network
     restart: unless-stopped
@@ -26,21 +24,23 @@ services:
 
   # Database Initialization
   db-init:
-    image: mcr.microsoft.com/mssql-tools
+    image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: platformflower-db-init
     depends_on:
       sqlserver:
         condition: service_healthy
     volumes:
-      - ./Scripts:/scripts
+      - ./PlatformFlower/Scripts:/scripts
     networks:
       - platformflower-network
+    environment:
+      - ACCEPT_EULA=Y
     command: >
-      sh -c "
+      bash -c "
         echo 'Waiting for SQL Server to be ready...'
         sleep 30
         echo 'Running database initialization script...'
-        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P PlatformFlower123! -i /scripts/CreateFlowershopDatabase.sql
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P PlatformFlower123! -C -i /scripts/CreateFlowershopDatabase.sql
         echo 'Database initialization completed!'
       "
     restart: "no"
