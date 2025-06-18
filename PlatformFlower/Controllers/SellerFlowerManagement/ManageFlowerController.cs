@@ -65,7 +65,7 @@ namespace PlatformFlower.Controllers.SellerFlowerManagement
                         ? "DELETE"
                         : "UPDATE";
 
-                _logger.LogInformation($"Seller managing flower - Operation: {operationType}, FlowerName: {request.FlowerName}, FlowerId: {request.FlowerId}, SellerId: {sellerId}");
+                _logger.LogInformation($"Seller managing flower - Operation: {operationType}, FlowerName: {request.FlowerName}, FlowerId: {request.FlowerId}, SellerId: {sellerId}, ImageFile: {(request.ImageFile != null ? $"Present ({request.ImageFile.Length} bytes)" : "None")}, ImageUrl: {(string.IsNullOrEmpty(request.ImageUrl) ? "None" : "Present")}");
 
                 var result = await _flowerManagementService.ManageFlowerAsync(request, sellerId);
 
