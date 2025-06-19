@@ -440,6 +440,13 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.VoucherCode)
                 .HasMaxLength(50)
                 .HasColumnName("voucher_code");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("active")
+                .HasColumnName("status");
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("is_deleted");
 
             entity.HasOne(d => d.Shop).WithMany(p => p.UserVoucherStatuses)
                 .HasForeignKey(d => d.ShopId)
