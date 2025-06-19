@@ -29,6 +29,10 @@ public partial class UserVoucherStatus
 
     public int? ShopId { get; set; }
 
+    public string Status { get; set; } = "active";
+
+    public bool IsDeleted { get; set; } = false;
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();

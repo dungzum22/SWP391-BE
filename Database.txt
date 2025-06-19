@@ -124,8 +124,11 @@ CREATE TABLE User_Voucher_Status (
     remaining_count INT,                    -- Số lượng voucher còn lại cho người dùng
     created_at DATETIME DEFAULT GETDATE(),  -- Thời gian tạo voucher
     shop_id INT,
+    status NVARCHAR(20) DEFAULT 'active',   -- Trạng thái voucher (active, inactive, expired)
+    is_deleted BIT DEFAULT 0,               -- Soft delete flag (0=active, 1=deleted)
     FOREIGN KEY (user_info_id) REFERENCES User_Info(user_info_id),
-    FOREIGN KEY (shop_id) REFERENCES Seller(seller_id)
+    FOREIGN KEY (shop_id) REFERENCES Seller(seller_id),
+    CONSTRAINT chk_voucher_status CHECK (status IN ('active', 'inactive', 'expired'))
 );
 GO
 
