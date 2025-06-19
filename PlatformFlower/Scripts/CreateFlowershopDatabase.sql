@@ -124,8 +124,11 @@ CREATE TABLE User_Voucher_Status (
     remaining_count INT,                    -- Số lượng voucher còn lại cho người dùng
     created_at DATETIME DEFAULT GETDATE(),  -- Thời gian tạo voucher
     shop_id INT,
+    status NVARCHAR(20) DEFAULT 'active',   -- Trạng thái voucher (active, inactive, expired)
+    is_deleted BIT DEFAULT 0,               -- Soft delete flag (0=active, 1=deleted)
     FOREIGN KEY (user_info_id) REFERENCES User_Info(user_info_id),
-    FOREIGN KEY (shop_id) REFERENCES Seller(seller_id)
+    FOREIGN KEY (shop_id) REFERENCES Seller(seller_id),
+    CONSTRAINT chk_voucher_status CHECK (status IN ('active', 'inactive', 'expired'))
 );
 GO
 
@@ -217,4 +220,55 @@ INCLUDE (flower_name, flower_description, price, category_id, seller_id)
 WHERE is_deleted = 0;
 GO
 
-PRINT 'Database Flowershop created successfully with password reset functionality and soft delete support!';
+-- Indexes for User_Voucher_Status soft delete optimization
+
+-- Index for seller dashboard (shows all vouchers including deleted for history)
+CREATE INDEX IX_UserVoucherStatus_Seller_Dashboard
+ON User_Voucher_Status (shop_id, is_deleted, status)
+INCLUDE (voucher_code, discount, start_date, end_date, created_at, description, usage_limit, remaining_count);
+GO
+
+-- Index for user queries (only active, non-deleted vouchers)
+CREATE INDEX IX_UserVoucherStatus_User_Available
+ON User_Voucher_Status (user_info_id, is_deleted, status, start_date, end_date)
+INCLUDE (voucher_code, discount, remaining_count, usage_limit, description)
+WHERE is_deleted = 0 AND status = 'active';
+GO
+
+-- Index for voucher code lookup (for applying vouchers)
+CREATE INDEX IX_UserVoucherStatus_Code_Lookup
+ON User_Voucher_Status (voucher_code, is_deleted, status)
+INCLUDE (user_info_id, shop_id, discount, start_date, end_date, remaining_count, usage_limit)
+WHERE is_deleted = 0;
+GO
+
+-- Index for shop-specific voucher management
+CREATE INDEX IX_UserVoucherStatus_Shop_Management
+ON User_Voucher_Status (shop_id, status, is_deleted, created_at)
+INCLUDE (voucher_code, discount, start_date, end_date, description);
+GO
+
+-- Create view for user-visible vouchers (helper for application queries)
+CREATE VIEW vw_UserAvailableVouchers AS
+SELECT
+    user_voucher_status_id,
+    user_info_id,
+    voucher_code,
+    discount,
+    description,
+    start_date,
+    end_date,
+    usage_limit,
+    usage_count,
+    remaining_count,
+    created_at,
+    shop_id
+FROM User_Voucher_Status
+WHERE is_deleted = 0
+  AND status = 'active'
+  AND start_date <= GETDATE()
+  AND end_date >= GETDATE()
+  AND (remaining_count IS NULL OR remaining_count > 0);
+GO
+
+PRINT 'Database Flowershop created successfully with password reset functionality and voucher soft delete support!';
