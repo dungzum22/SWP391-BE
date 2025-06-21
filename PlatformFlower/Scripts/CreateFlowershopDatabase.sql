@@ -275,7 +275,7 @@ GO
 DECLARE @AdminUserId INT;
 
 INSERT INTO Users (username, password, email, type, status)
-VALUES ('admin', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@platformflower.com', 'admin', 'active');
+VALUES ('admin', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'flowershopplatform@gmail.com', 'admin', 'active');
 
 SET @AdminUserId = SCOPE_IDENTITY();
 
