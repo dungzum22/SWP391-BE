@@ -271,4 +271,26 @@ WHERE is_deleted = 0
   AND (remaining_count IS NULL OR remaining_count > 0);
 GO
 
-PRINT 'Database Flowershop created successfully with password reset functionality and voucher soft delete support!';
+-- Insert default admin account (password: Admin123)
+DECLARE @AdminUserId INT;
+
+INSERT INTO Users (username, password, email, type, status)
+VALUES ('admin', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@platformflower.com', 'admin', 'active');
+
+SET @AdminUserId = SCOPE_IDENTITY();
+
+-- Insert admin user info
+INSERT INTO User_Info (user_id, full_name, address, sex, is_seller, points)
+VALUES (@AdminUserId, 'System Administrator', 'Platform Flower HQ', 'other', 0, 1000);
+GO
+
+-- Insert default categories
+INSERT INTO Category (category_name, status) VALUES
+('Hoa hồng', 'active'),
+('Hoa tulip', 'active'),
+('Hoa cúc', 'active'),
+('Hoa lan', 'active'),
+('Hoa hướng dương', 'active');
+GO
+
+PRINT 'Database Flowershop created successfully with default admin account and categories!';
