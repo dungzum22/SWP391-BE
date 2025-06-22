@@ -70,7 +70,6 @@ namespace PlatformFlower.Services.User.Profile
                     userInfo = new Entities.UserInfo
                     {
                         UserId = userId,
-                        Points = 100,
                         CreatedDate = DateTime.UtcNow,
                         UpdatedDate = DateTime.UtcNow
                     };
@@ -145,7 +144,6 @@ namespace PlatformFlower.Services.User.Profile
                     BirthDate = userInfo.BirthDate,
                     Sex = userInfo.Sex,
                     Avatar = userInfo.Avatar,
-                    Points = userInfo.Points,
                     CreatedDate = userInfo.CreatedDate,
                     UpdatedDate = userInfo.UpdatedDate
                 } : null
