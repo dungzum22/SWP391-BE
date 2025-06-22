@@ -23,7 +23,6 @@ namespace PlatformFlower.Services.Common.Flower
 
                 var flowers = await _context.FlowerInfos
                     .Include(f => f.Category)
-                    .Include(f => f.Seller)
                     .Where(f => f.Status == "active" && !f.IsDeleted && f.AvailableQuantity > 0)
                     .OrderByDescending(f => f.CreatedAt)
                     .ToListAsync();
@@ -48,10 +47,9 @@ namespace PlatformFlower.Services.Common.Flower
 
                 var flower = await _context.FlowerInfos
                     .Include(f => f.Category)
-                    .Include(f => f.Seller)
-                    .FirstOrDefaultAsync(f => f.FlowerId == flowerId 
-                                            && f.Status == "active" 
-                                            && !f.IsDeleted 
+                    .FirstOrDefaultAsync(f => f.FlowerId == flowerId
+                                            && f.Status == "active"
+                                            && !f.IsDeleted
                                             && f.AvailableQuantity > 0);
 
                 if (flower != null)
@@ -78,10 +76,9 @@ namespace PlatformFlower.Services.Common.Flower
 
                 var flowers = await _context.FlowerInfos
                     .Include(f => f.Category)
-                    .Include(f => f.Seller)
-                    .Where(f => f.CategoryId == categoryId 
-                              && f.Status == "active" 
-                              && !f.IsDeleted 
+                    .Where(f => f.CategoryId == categoryId
+                              && f.Status == "active"
+                              && !f.IsDeleted
                               && f.AvailableQuantity > 0)
                     .OrderByDescending(f => f.CreatedAt)
                     .ToListAsync();
@@ -98,33 +95,7 @@ namespace PlatformFlower.Services.Common.Flower
             }
         }
 
-        public async Task<List<FlowerResponse>> GetFlowersBySellerAsync(int sellerId)
-        {
-            try
-            {
-                _logger.LogInformation($"Getting active flowers by seller ID: {sellerId}");
 
-                var flowers = await _context.FlowerInfos
-                    .Include(f => f.Category)
-                    .Include(f => f.Seller)
-                    .Where(f => f.SellerId == sellerId 
-                              && f.Status == "active" 
-                              && !f.IsDeleted 
-                              && f.AvailableQuantity > 0)
-                    .OrderByDescending(f => f.CreatedAt)
-                    .ToListAsync();
-
-                var result = flowers.Select(MapToFlowerResponse).ToList();
-
-                _logger.LogInformation($"Successfully retrieved {result.Count} active flowers for seller {sellerId}");
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error getting flowers by seller {sellerId}: {ex.Message}", ex);
-                throw;
-            }
-        }
 
 
 
@@ -143,8 +114,6 @@ namespace PlatformFlower.Services.Common.Flower
                 UpdatedAt = flower.UpdatedAt,
                 CategoryId = flower.CategoryId,
                 CategoryName = flower.Category?.CategoryName,
-                SellerId = flower.SellerId,
-                SellerShopName = flower.Seller?.ShopName,
                 IsDeleted = flower.IsDeleted
             };
         }

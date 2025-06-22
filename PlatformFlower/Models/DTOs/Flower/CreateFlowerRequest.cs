@@ -11,7 +11,6 @@ namespace PlatformFlower.Models.DTOs.Flower
         public int? AvailableQuantity { get; set; }
         public string? Status { get; set; }
         public int? CategoryId { get; set; }
-        public int? SellerId { get; set; }
         public bool IsDeleted { get; set; } = false;
     }
 }
