@@ -110,6 +110,10 @@ namespace PlatformFlower
             builder.Services.AddScoped<PlatformFlower.Services.Common.Flower.IFlowerService, PlatformFlower.Services.Common.Flower.FlowerService>();
             builder.Services.AddScoped<PlatformFlower.Services.User.Cart.ICartService, PlatformFlower.Services.User.Cart.CartService>();
             builder.Services.AddScoped<PlatformFlower.Services.User.Address.IAddressManagementService, PlatformFlower.Services.User.Address.AddressManagementService>();
+            builder.Services.AddScoped<PlatformFlower.Services.User.Order.IOrderService, PlatformFlower.Services.User.Order.OrderService>();
+
+            // Register Payment services
+            builder.Services.AddScoped<PlatformFlower.Services.Payment.VNPay.IVNPayService, PlatformFlower.Services.Payment.VNPay.VNPayService>();
 
             // Register Email services
             builder.Services.AddSingleton<PlatformFlower.Services.Email.IEmailConfiguration, PlatformFlower.Services.Email.EmailConfiguration>();
