@@ -13,8 +13,6 @@ namespace PlatformFlower.Models.DTOs.Flower
         public DateTime? UpdatedAt { get; set; }
         public int? CategoryId { get; set; }
         public string? CategoryName { get; set; }
-        public int? SellerId { get; set; }
-        public string? SellerShopName { get; set; }
         public bool IsDeleted { get; set; }
     }
 }
