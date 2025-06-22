@@ -12,8 +12,6 @@ namespace PlatformFlower.Models.DTOs.Voucher
         public int? UsageCount { get; set; }
         public int? RemainingCount { get; set; }
         public DateTime? CreatedAt { get; set; }
-        public int? ShopId { get; set; }
-        public string? ShopName { get; set; }
         public string Status { get; set; } = "active";
         public bool IsDeleted { get; set; } = false;
         public bool IsExpired => DateTime.Now > EndDate;

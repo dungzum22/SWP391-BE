@@ -99,14 +99,10 @@ namespace PlatformFlower
             builder.Services.AddScoped<PlatformFlower.Services.User.Profile.IProfileService, PlatformFlower.Services.User.Profile.ProfileServiceSimple>();
             builder.Services.AddScoped<PlatformFlower.Services.Auth.IJwtService, PlatformFlower.Services.Auth.JwtService>();
 
-            // Register Seller services
-            builder.Services.AddScoped<PlatformFlower.Services.Seller.Profile.ISellerProfileService, PlatformFlower.Services.Seller.Profile.SellerProfileService>();
-            builder.Services.AddScoped<PlatformFlower.Services.Seller.VoucherManagement.IVoucherManagementService, PlatformFlower.Services.Seller.VoucherManagement.VoucherManagementService>();
-
             // Register Admin services
             builder.Services.AddScoped<PlatformFlower.Services.Admin.UserManagement.IUserManagementService, PlatformFlower.Services.Admin.UserManagement.UserManagementService>();
             builder.Services.AddScoped<PlatformFlower.Services.Admin.CategoryManagement.ICategoryManagementService, PlatformFlower.Services.Admin.CategoryManagement.CategoryManagementService>();
-            builder.Services.AddScoped<PlatformFlower.Services.Seller.FlowerManagement.IFlowerManagementService, PlatformFlower.Services.Seller.FlowerManagement.FlowerManagementService>();
+            builder.Services.AddScoped<PlatformFlower.Services.Admin.VoucherManagement.IAdminVoucherService, PlatformFlower.Services.Admin.VoucherManagement.AdminVoucherService>();
 
             // Register Common services
             builder.Services.AddScoped<PlatformFlower.Services.Common.Category.ICategoryService, PlatformFlower.Services.Common.Category.CategoryService>();
