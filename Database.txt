@@ -22,23 +22,10 @@ CREATE TABLE Users (
     status NVARCHAR(20) DEFAULT 'active',
     reset_password_token NVARCHAR(255) NULL,  -- Token để reset password
     reset_password_token_expiry DATETIME NULL,  -- Thời gian hết hạn của token
-    CONSTRAINT chk_role CHECK (type IN ('admin', 'seller', 'user')),
+    CONSTRAINT chk_role CHECK (type IN ('admin', 'user')),
     CONSTRAINT chk_status CHECK (status IN ('active', 'inactive'))
 );
 GO
-
-CREATE TABLE Seller (
-    seller_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT NOT NULL,
-    shop_name NVARCHAR(255) NOT NULL,
-    address_seller NVARCHAR(255) NOT NULL,
-    created_at DATETIME DEFAULT GETDATE(),
-    updated_at DATETIME DEFAULT GETDATE(),
-    total_product INT DEFAULT 0,
-    role NVARCHAR(20) NOT NULL CHECK (role IN ('individual', 'enterprise')),
-    introduction TEXT,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
-);
 
 -- Bảng User_Info
 CREATE TABLE User_Info (
@@ -48,11 +35,9 @@ CREATE TABLE User_Info (
     full_name NVARCHAR(255),
     birth_date DATE,
     sex NVARCHAR(10),
-    is_seller BIT DEFAULT 0,  -- Boolean thay bằng BIT
     avatar NVARCHAR(255),
     created_date DATETIME DEFAULT GETDATE(),
     updated_date DATETIME DEFAULT GETDATE(),
-    Points INT CONSTRAINT DF_User_Info_Points DEFAULT 100,
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     CONSTRAINT chk_sex CHECK (sex IN ('male', 'female', 'other'))
 );
@@ -69,7 +54,7 @@ CREATE TABLE Category (
 );
 GO
 
--- Bảng Flower_Info với liên kết đến bảng Category và Seller
+-- Bảng Flower_Info với liên kết đến bảng Category
 CREATE TABLE Flower_Info (
     flower_id INT IDENTITY(1,1) PRIMARY KEY,
     flower_name NVARCHAR(255) NOT NULL,
@@ -81,10 +66,8 @@ CREATE TABLE Flower_Info (
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
     category_id INT,
-    seller_id INT,
     is_deleted BIT NOT NULL DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES Category(category_id),
-    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id),
     CONSTRAINT chk_flower_status CHECK (status IN ('active', 'inactive'))
 );
 GO
@@ -123,11 +106,9 @@ CREATE TABLE User_Voucher_Status (
     usage_count INT DEFAULT 0,              -- Số lần voucher đã được sử dụng bởi người dùng này
     remaining_count INT,                    -- Số lượng voucher còn lại cho người dùng
     created_at DATETIME DEFAULT GETDATE(),  -- Thời gian tạo voucher
-    shop_id INT,
     status NVARCHAR(20) DEFAULT 'active',   -- Trạng thái voucher (active, inactive, expired)
     is_deleted BIT DEFAULT 0,               -- Soft delete flag (0=active, 1=deleted)
     FOREIGN KEY (user_info_id) REFERENCES User_Info(user_info_id),
-    FOREIGN KEY (shop_id) REFERENCES Seller(seller_id),
     CONSTRAINT chk_voucher_status CHECK (status IN ('active', 'inactive', 'expired'))
 );
 GO
@@ -156,7 +137,6 @@ GO
 CREATE TABLE Orders_Detail (
     order_detail_id INT IDENTITY(1,1) PRIMARY KEY,
     order_id INT,
-    seller_id INT,
     flower_id INT,
     price DECIMAL(10, 2) NOT NULL,
     amount INT NOT NULL,
@@ -167,28 +147,9 @@ CREATE TABLE Orders_Detail (
     delivery_method NVARCHAR(255) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE,
     FOREIGN KEY (flower_id) REFERENCES Flower_Info(flower_id),
-    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id),
     FOREIGN KEY (address_id) REFERENCES Address(address_id),
     FOREIGN KEY (user_voucher_status_id) REFERENCES User_Voucher_Status(user_voucher_status_id),
     CONSTRAINT chk_order_detail_status CHECK (status IN ('pending', 'delivered', 'canceled','accepted','pending delivery'))
-);
-GO
-
--- Bảng Product_Report để lưu thông tin báo cáo sản phẩm
-CREATE TABLE Report (
-report_id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT NOT NULL,  -- Người dùng báo cáo
-    flower_id INT NOT NULL,  -- Sản phẩm bị báo cáo
-    seller_id INT NOT NULL,  -- Người bán sản phẩm bị báo cáo
-    report_reason NVARCHAR(255) NOT NULL,  -- Lý do báo cáo
-    report_description NVARCHAR(255),  -- Mô tả chi tiết về báo cáo
-    status NVARCHAR(20) DEFAULT 'pending',  -- Trạng thái xử lý báo cáo
-    created_at DATETIME DEFAULT GETDATE(),
-    updated_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (flower_id) REFERENCES Flower_Info(flower_id),
-    FOREIGN KEY (seller_id) REFERENCES Seller(seller_id),
-    CONSTRAINT chk_report_status CHECK (status IN ('pending', 'resolved', 'dismissed'))  -- Ràng buộc trạng thái
 );
 GO
 
@@ -200,9 +161,9 @@ INCLUDE (flower_name, price, available_quantity, image_url)
 WHERE is_deleted = 0;
 GO
 
--- Index for seller dashboard (all flowers by seller)
-CREATE INDEX IX_FlowerInfo_Seller_Dashboard
-ON Flower_Info (seller_id, is_deleted, status)
+-- Index for admin dashboard (all flowers)
+CREATE INDEX IX_FlowerInfo_Admin_Dashboard
+ON Flower_Info (is_deleted, status)
 INCLUDE (flower_name, price, available_quantity, created_at, updated_at);
 GO
 
@@ -216,17 +177,11 @@ GO
 -- Index for search and filtering
 CREATE INDEX IX_FlowerInfo_Search_Filter
 ON Flower_Info (is_deleted, status)
-INCLUDE (flower_name, flower_description, price, category_id, seller_id)
+INCLUDE (flower_name, flower_description, price, category_id)
 WHERE is_deleted = 0;
 GO
 
 -- Indexes for User_Voucher_Status soft delete optimization
-
--- Index for seller dashboard (shows all vouchers including deleted for history)
-CREATE INDEX IX_UserVoucherStatus_Seller_Dashboard
-ON User_Voucher_Status (shop_id, is_deleted, status)
-INCLUDE (voucher_code, discount, start_date, end_date, created_at, description, usage_limit, remaining_count);
-GO
 
 -- Index for user queries (only active, non-deleted vouchers)
 CREATE INDEX IX_UserVoucherStatus_User_Available
@@ -238,13 +193,13 @@ GO
 -- Index for voucher code lookup (for applying vouchers)
 CREATE INDEX IX_UserVoucherStatus_Code_Lookup
 ON User_Voucher_Status (voucher_code, is_deleted, status)
-INCLUDE (user_info_id, shop_id, discount, start_date, end_date, remaining_count, usage_limit)
+INCLUDE (user_info_id, discount, start_date, end_date, remaining_count, usage_limit)
 WHERE is_deleted = 0;
 GO
 
--- Index for shop-specific voucher management
-CREATE INDEX IX_UserVoucherStatus_Shop_Management
-ON User_Voucher_Status (shop_id, status, is_deleted, created_at)
+-- Index for admin voucher management
+CREATE INDEX IX_UserVoucherStatus_Admin_Management
+ON User_Voucher_Status (status, is_deleted, created_at)
 INCLUDE (voucher_code, discount, start_date, end_date, description);
 GO
 
@@ -261,8 +216,7 @@ SELECT
     usage_limit,
     usage_count,
     remaining_count,
-    created_at,
-    shop_id
+    created_at
 FROM User_Voucher_Status
 WHERE is_deleted = 0
   AND status = 'active'
@@ -280,8 +234,8 @@ VALUES ('admin', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
 SET @AdminUserId = SCOPE_IDENTITY();
 
 -- Insert admin user info
-INSERT INTO User_Info (user_id, full_name, address, sex, is_seller, points)
-VALUES (@AdminUserId, 'System Administrator', 'Platform Flower HQ', 'other', 0, 1000);
+INSERT INTO User_Info (user_id, full_name, address, sex)
+VALUES (@AdminUserId, 'System Administrator', 'Platform Flower HQ', 'other');
 GO
 
 -- Insert default categories
