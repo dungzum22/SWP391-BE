@@ -13,7 +13,6 @@ namespace PlatformFlower.Models.DTOs.Cart
         public decimal CurrentPrice { get; set; }
         public bool PriceChanged => UnitPrice != CurrentPrice;
         public string? CategoryName { get; set; }
-        public string? SellerShopName { get; set; }
         public int AvailableQuantity { get; set; }
     }
 }

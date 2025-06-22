@@ -362,7 +362,6 @@ namespace PlatformFlower.Services.User.Auth
                     Address = userInfo.Address,
                     BirthDate = userInfo.BirthDate,
                     Sex = userInfo.Sex,
-                    IsSeller = userInfo.IsSeller,
                     Avatar = userInfo.Avatar,
                     Points = userInfo.Points,
                     CreatedDate = userInfo.CreatedDate,

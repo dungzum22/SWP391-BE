@@ -107,9 +107,6 @@ namespace PlatformFlower.Services.User.Profile
                 if (updateDto.Sex != null)
                     userInfo.Sex = updateDto.Sex;
 
-                if (updateDto.IsSeller.HasValue)
-                    userInfo.IsSeller = updateDto.IsSeller.Value;
-
                 if (newAvatarUrl != null)
                     userInfo.Avatar = newAvatarUrl;
 
@@ -147,7 +144,6 @@ namespace PlatformFlower.Services.User.Profile
                     Address = userInfo.Address,
                     BirthDate = userInfo.BirthDate,
                     Sex = userInfo.Sex,
-                    IsSeller = userInfo.IsSeller,
                     Avatar = userInfo.Avatar,
                     Points = userInfo.Points,
                     CreatedDate = userInfo.CreatedDate,
