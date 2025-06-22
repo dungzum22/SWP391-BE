@@ -112,8 +112,8 @@ namespace PlatformFlower.Services.Admin.FlowerManagement
                 // Handle image upload if provided
                 if (request.ImageFile != null)
                 {
-                    var imageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
-                    existingInactiveFlower.ImageUrl = imageUrl;
+                    var uploadedImageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
+                    existingInactiveFlower.ImageUrl = uploadedImageUrl;
                 }
                 else if (!string.IsNullOrEmpty(request.ImageUrl))
                 {
@@ -186,8 +186,8 @@ namespace PlatformFlower.Services.Admin.FlowerManagement
             // Handle image upload if provided
             if (request.ImageFile != null)
             {
-                var imageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
-                flower.ImageUrl = imageUrl;
+                var uploadedImageUrl = await _storageService.UploadFileAsync(request.ImageFile, "flowers");
+                flower.ImageUrl = uploadedImageUrl;
             }
             else if (!string.IsNullOrEmpty(request.ImageUrl))
             {

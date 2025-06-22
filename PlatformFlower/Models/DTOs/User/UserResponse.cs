@@ -21,7 +21,6 @@ namespace PlatformFlower.Models.DTOs.User
         public DateOnly? BirthDate { get; set; }
         public string? Sex { get; set; }
         public string? Avatar { get; set; }
-        public int? Points { get; set; }
         public DateTime? CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
     }

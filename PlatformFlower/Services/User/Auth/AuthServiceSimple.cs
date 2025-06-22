@@ -363,7 +363,6 @@ namespace PlatformFlower.Services.User.Auth
                     BirthDate = userInfo.BirthDate,
                     Sex = userInfo.Sex,
                     Avatar = userInfo.Avatar,
-                    Points = userInfo.Points,
                     CreatedDate = userInfo.CreatedDate,
                     UpdatedDate = userInfo.UpdatedDate
                 } : null
