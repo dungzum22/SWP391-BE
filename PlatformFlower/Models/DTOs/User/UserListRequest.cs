@@ -34,17 +34,6 @@ namespace PlatformFlower.Models.DTOs.User
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; }
         public UserInfoManagement? UserInfo { get; set; }
-        public SellerInfo? SellerInfo { get; set; }
-    }
-
-    public class SellerInfo
-    {
-        public int SellerId { get; set; }
-        public string ShopName { get; set; } = null!;
-        public string AddressSeller { get; set; } = null!;
-        public string Role { get; set; } = null!;
-        public int? TotalProduct { get; set; }
-        public DateTime? CreatedAt { get; set; }
     }
 
 

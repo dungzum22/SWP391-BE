@@ -65,7 +65,6 @@ namespace PlatformFlower.Services.Admin.UserManagement
 
                 var user = await _context.Users
                     .Include(u => u.UserInfos)
-                    .Include(u => u.Sellers)
                     .FirstOrDefaultAsync(u => u.UserId == userId);
 
                 if (user == null)
@@ -75,7 +74,6 @@ namespace PlatformFlower.Services.Admin.UserManagement
                 }
 
                 var userInfo = user.UserInfos.FirstOrDefault();
-                var seller = user.Sellers.FirstOrDefault();
 
                 var result = new UserDetailResponse
                 {
@@ -94,15 +92,6 @@ namespace PlatformFlower.Services.Admin.UserManagement
                         DateOfBirth = userInfo.BirthDate?.ToDateTime(TimeOnly.MinValue),
                         Gender = userInfo.Sex,
                         Avatar = userInfo.Avatar
-                    } : null,
-                    SellerInfo = seller != null ? new SellerInfo
-                    {
-                        SellerId = seller.SellerId,
-                        ShopName = seller.ShopName,
-                        AddressSeller = seller.AddressSeller,
-                        Role = seller.Role,
-                        TotalProduct = seller.TotalProduct,
-                        CreatedAt = seller.CreatedAt
                     } : null
                 };
 
