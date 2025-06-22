@@ -27,8 +27,6 @@ public partial class UserVoucherStatus
 
     public DateTime? CreatedAt { get; set; }
 
-    public int? ShopId { get; set; }
-
     public string Status { get; set; } = "active";
 
     public bool IsDeleted { get; set; } = false;
@@ -36,8 +34,6 @@ public partial class UserVoucherStatus
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
-
-    public virtual Seller? Shop { get; set; }
 
     public virtual UserInfo? UserInfo { get; set; }
 }
