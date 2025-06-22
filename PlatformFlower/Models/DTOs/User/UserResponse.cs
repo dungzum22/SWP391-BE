@@ -20,7 +20,6 @@ namespace PlatformFlower.Models.DTOs.User
         public string? Address { get; set; }
         public DateOnly? BirthDate { get; set; }
         public string? Sex { get; set; }
-        public bool? IsSeller { get; set; }
         public string? Avatar { get; set; }
         public int? Points { get; set; }
         public DateTime? CreatedDate { get; set; }

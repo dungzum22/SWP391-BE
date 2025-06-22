@@ -17,7 +17,6 @@ namespace PlatformFlower.Services.User.Cart
         {
             var flower = await _context.FlowerInfos
                 .Include(f => f.Category)
-                .Include(f => f.Seller)
                 .FirstOrDefaultAsync(f => f.FlowerId == request.FlowerId && !f.IsDeleted && f.Status == "active");
 
             if (flower == null)
@@ -62,8 +61,6 @@ namespace PlatformFlower.Services.User.Cart
             var cartItems = await _context.Carts
                 .Include(c => c.Flower)
                     .ThenInclude(f => f.Category)
-                .Include(c => c.Flower)
-                    .ThenInclude(f => f.Seller)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
@@ -87,8 +84,6 @@ namespace PlatformFlower.Services.User.Cart
             var cartItem = await _context.Carts
                 .Include(c => c.Flower)
                     .ThenInclude(f => f.Category)
-                .Include(c => c.Flower)
-                    .ThenInclude(f => f.Seller)
                 .FirstOrDefaultAsync(c => c.CartId == cartId && c.UserId == userId);
 
             if (cartItem == null)
@@ -148,7 +143,6 @@ namespace PlatformFlower.Services.User.Cart
                 UnitPrice = cartItem.UnitPrice,
                 CurrentPrice = flower.Price,
                 CategoryName = flower.Category?.CategoryName,
-                SellerShopName = flower.Seller?.ShopName,
                 AvailableQuantity = flower.AvailableQuantity
             };
         }

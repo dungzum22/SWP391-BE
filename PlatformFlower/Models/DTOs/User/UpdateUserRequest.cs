@@ -15,8 +15,6 @@ namespace PlatformFlower.Models.DTOs.User
         [RegularExpression("^(male|female|other)$", ErrorMessage = "Sex must be 'male', 'female', or 'other'")]
         public string? Sex { get; set; }
 
-        public bool? IsSeller { get; set; }
-
         public IFormFile? Avatar { get; set; }
     }
 }
