@@ -28,10 +28,6 @@ public partial class FlowershopContext : DbContext
 
     public virtual DbSet<OrdersDetail> OrdersDetails { get; set; }
 
-    public virtual DbSet<Report> Reports { get; set; }
-
-    public virtual DbSet<Seller> Sellers { get; set; }
-
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserInfo> UserInfos { get; set; }
@@ -142,7 +138,6 @@ public partial class FlowershopContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValue("active")
                 .HasColumnName("status");
-            entity.Property(e => e.SellerId).HasColumnName("seller_id");
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false)
                 .HasColumnName("is_deleted");
@@ -150,10 +145,6 @@ public partial class FlowershopContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.FlowerInfos)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("FK__Flower_In__categ__5165187F");
-
-            entity.HasOne(d => d.Seller).WithMany(p => p.FlowerInfos)
-                .HasForeignKey(d => d.SellerId)
-                .HasConstraintName("FK__Flower_In__selle__52593CB8");
         });
 
         modelBuilder.Entity<Order>(entity =>
@@ -223,7 +214,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Price)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("price");
-            entity.Property(e => e.SellerId).HasColumnName("seller_id");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .HasDefaultValue("pending")
@@ -243,96 +233,9 @@ public partial class FlowershopContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__Orders_De__order__6A30C649");
 
-            entity.HasOne(d => d.Seller).WithMany(p => p.OrdersDetails)
-                .HasForeignKey(d => d.SellerId)
-                .HasConstraintName("FK__Orders_De__selle__6C190EBB");
-
             entity.HasOne(d => d.UserVoucherStatus).WithMany(p => p.OrdersDetails)
                 .HasForeignKey(d => d.UserVoucherStatusId)
                 .HasConstraintName("FK__Orders_De__user___6E01572D");
-        });
-
-        modelBuilder.Entity<Report>(entity =>
-        {
-            entity.HasKey(e => e.ReportId).HasName("PK__Report__779B7C58DEDFFF56");
-
-            entity.ToTable("Report");
-
-            entity.Property(e => e.ReportId).HasColumnName("report_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
-            entity.Property(e => e.FlowerId).HasColumnName("flower_id");
-            entity.Property(e => e.ReportDescription)
-                .HasMaxLength(255)
-                .HasColumnName("report_description");
-            entity.Property(e => e.ReportReason)
-                .HasMaxLength(255)
-                .HasColumnName("report_reason");
-            entity.Property(e => e.SellerId).HasColumnName("seller_id");
-            entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .HasDefaultValue("pending")
-                .HasColumnName("status");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.Flower).WithMany(p => p.Reports)
-                .HasForeignKey(d => d.FlowerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Report__flower_i__75A278F5");
-
-            entity.HasOne(d => d.Seller).WithMany(p => p.Reports)
-                .HasForeignKey(d => d.SellerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Report__seller_i__76969D2E");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Reports)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Report__user_id__74AE54BC");
-        });
-
-        modelBuilder.Entity<Seller>(entity =>
-        {
-            entity.HasKey(e => e.SellerId).HasName("PK__Seller__780A0A9753C9D88D");
-
-            entity.ToTable("Seller");
-
-            entity.Property(e => e.SellerId).HasColumnName("seller_id");
-            entity.Property(e => e.AddressSeller)
-                .HasMaxLength(255)
-                .HasColumnName("address_seller");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Introduction)
-                .HasColumnType("text")
-                .HasColumnName("introduction");
-            entity.Property(e => e.Role)
-                .HasMaxLength(20)
-                .HasColumnName("role");
-            entity.Property(e => e.ShopName)
-                .HasMaxLength(255)
-                .HasColumnName("shop_name");
-            entity.Property(e => e.TotalProduct)
-                .HasDefaultValue(0)
-                .HasColumnName("total_product");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Sellers)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Seller__user_id__440B1D61");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -391,10 +294,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.FullName)
                 .HasMaxLength(255)
                 .HasColumnName("full_name");
-            entity.Property(e => e.IsSeller)
-                .HasDefaultValue(false)
-                .HasColumnName("is_seller");
-            entity.Property(e => e.Points).HasDefaultValue(100);
             entity.Property(e => e.Sex)
                 .HasMaxLength(10)
                 .HasColumnName("sex");
@@ -428,7 +327,6 @@ public partial class FlowershopContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("end_date");
             entity.Property(e => e.RemainingCount).HasColumnName("remaining_count");
-            entity.Property(e => e.ShopId).HasColumnName("shop_id");
             entity.Property(e => e.StartDate)
                 .HasColumnType("datetime")
                 .HasColumnName("start_date");
@@ -447,10 +345,6 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false)
                 .HasColumnName("is_deleted");
-
-            entity.HasOne(d => d.Shop).WithMany(p => p.UserVoucherStatuses)
-                .HasForeignKey(d => d.ShopId)
-                .HasConstraintName("FK__User_Vouc__shop___5EBF139D");
 
             entity.HasOne(d => d.UserInfo).WithMany(p => p.UserVoucherStatuses)
                 .HasForeignKey(d => d.UserInfoId)

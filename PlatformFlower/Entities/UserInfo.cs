@@ -17,15 +17,11 @@ public partial class UserInfo
 
     public string? Sex { get; set; }
 
-    public bool? IsSeller { get; set; }
-
     public string? Avatar { get; set; }
 
     public DateTime? CreatedDate { get; set; }
 
     public DateTime? UpdatedDate { get; set; }
-
-    public int? Points { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 

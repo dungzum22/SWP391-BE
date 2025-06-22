@@ -25,8 +25,6 @@ public partial class FlowerInfo
 
     public int? CategoryId { get; set; }
 
-    public int? SellerId { get; set; }
-
     public bool IsDeleted { get; set; } = false;
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
@@ -34,8 +32,4 @@ public partial class FlowerInfo
     public virtual Category? Category { get; set; }
 
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
-
-    public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
-
-    public virtual Seller? Seller { get; set; }
 }
