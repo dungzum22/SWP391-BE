@@ -1,34 +1,38 @@
 services:
-  # SQL Server Database
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/azure-sql-edge:1.0.7
     container_name: platformflower-sqlserver
+    user: "0:0"
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=PlatformFlower123!
-      - MSSQL_PID=Express
+      - SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Developer
     ports:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
-      - ./PlatformFlower/Scripts:/docker-entrypoint-initdb.d
     networks:
       - platformflower-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P PlatformFlower123! -Q 'SELECT 1'"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    # healthcheck:
+      # test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P PlatformFlower123! -Q 'SELECT 1' || exit 1"]
+      # interval: 30s
+      # timeout: 10s
+      # retries: 10
+      # start_period: 60s
 
-  # Database Initialization
+# Database Initialization
   db-init:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/azure-sql-edge:1.0.7
     container_name: platformflower-db-init
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      - sqlserver  # Removed condition: service_healthy
     volumes:
       - ./PlatformFlower/Scripts:/scripts
     networks:
@@ -40,34 +44,40 @@ services:
         echo 'Waiting for SQL Server to be ready...'
         sleep 30
         echo 'Running database initialization script...'
-        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P PlatformFlower123! -C -i /scripts/CreateFlowershopDatabase.sql
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P PlatformFlower123! -i /scripts/CreateFlowershopDatabase.sql
         echo 'Database initialization completed!'
       "
     restart: "no"
 
-  # .NET Backend API
+  # .NET Backend API  
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: platformflower-api
+    image: ghcr.io/dungzum22/swp391-be:latest
     depends_on:
       - db-init
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=sqlserver;Initial Catalog=Flowershop;User ID=sa;Password=PlatformFlower123!;Encrypt=True;Trust Server Certificate=True
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET}
+      - VNPay__ApiUrl=${VNPAY_API_URL}
+      - VNPay__TmnCode=${VNPAY_TMN_CODE}
+      - VNPay__HashSecret=${VNPAY_HASH_SECRET}
+      - VNPay__ReturnUrl=${VNPAY_RETURN_URL}
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
     ports:
-      - "5000:8080"
+      - "6784:8080"
     networks:
       - platformflower-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s
 
 volumes:
   sqlserver_data:

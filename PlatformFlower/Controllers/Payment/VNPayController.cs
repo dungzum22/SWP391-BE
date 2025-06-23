@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PlatformFlower.Models.DTOs.Payment;
 using PlatformFlower.Services.Common.Logging;
 using PlatformFlower.Services.Payment.VNPay;
@@ -11,11 +12,15 @@ namespace PlatformFlower.Controllers.Payment
     {
         private readonly IVNPayService _vnPayService;
         private readonly IAppLogger _logger;
+        private readonly FlowershopContext _context;
+        private readonly IConfiguration _configuration;
 
-        public VNPayController(IVNPayService vnPayService, IAppLogger logger)
+        public VNPayController(IVNPayService vnPayService, IAppLogger logger, FlowershopContext context, IConfiguration configuration)
         {
             _vnPayService = vnPayService;
             _logger = logger;
+            _context = context;
+            _configuration = configuration;
         }
 
         [HttpGet("vnpay_return")]
@@ -28,33 +33,23 @@ namespace PlatformFlower.Controllers.Payment
 
                 var result = await _vnPayService.ProcessReturnAsync(returnRequest);
 
+                // Get frontend URL from configuration
+                var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
+
                 if (result == "paid")
                 {
-                    return Ok(new {
-                        status = "success",
-                        message = "Payment completed successfully",
-                        orderId = returnRequest.vnp_TxnRef,
-                        transactionNo = returnRequest.vnp_TransactionNo,
-                        amount = returnRequest.vnp_Amount,
-                        payDate = returnRequest.vnp_PayDate
-                    });
+                    var redirectUrl = $"{frontendUrl}/payment/success?orderId={returnRequest.vnp_TxnRef}&transactionNo={returnRequest.vnp_TransactionNo}&amount={returnRequest.vnp_Amount}";
+                    return Redirect(redirectUrl);
                 }
                 else if (result == "failed")
                 {
-                    return Ok(new {
-                        status = "failed",
-                        message = "Payment failed",
-                        orderId = returnRequest.vnp_TxnRef,
-                        responseCode = returnRequest.vnp_ResponseCode
-                    });
+                    var redirectUrl = $"{frontendUrl}/payment/failed?orderId={returnRequest.vnp_TxnRef}&responseCode={returnRequest.vnp_ResponseCode}";
+                    return Redirect(redirectUrl);
                 }
                 else
                 {
-                    return BadRequest(new {
-                        status = "error",
-                        message = "Error processing payment",
-                        orderId = returnRequest.vnp_TxnRef
-                    });
+                    var redirectUrl = $"{frontendUrl}/payment/error?orderId={returnRequest.vnp_TxnRef}";
+                    return Redirect(redirectUrl);
                 }
             }
             catch (Exception ex)
@@ -65,6 +60,42 @@ namespace PlatformFlower.Controllers.Payment
                     message = "Internal server error while processing payment",
                     orderId = returnRequest.vnp_TxnRef,
                     error = ex.Message
+                });
+            }
+        }
+
+        // API endpoint for frontend to check payment status
+        [HttpGet("payment-status/{orderId}")]
+        public async Task<IActionResult> GetPaymentStatus(int orderId)
+        {
+            try
+            {
+                var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+                if (order == null)
+                {
+                    return NotFound(new {
+                        status = "error",
+                        message = "Order not found",
+                        orderId = orderId
+                    });
+                }
+
+                return Ok(new {
+                    status = "success",
+                    orderId = order.OrderId,
+                    paymentStatus = order.StatusPayment,
+                    totalPrice = order.TotalPrice,
+                    createdDate = order.CreatedDate
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting payment status for order {orderId}: {ex.Message}", ex);
+                return StatusCode(500, new {
+                    status = "error",
+                    message = "Internal server error",
+                    orderId = orderId
                 });
             }
         }
