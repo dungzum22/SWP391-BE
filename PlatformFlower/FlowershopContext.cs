@@ -167,6 +167,10 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(20)
                 .HasColumnName("phone_number");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("pending")
+                .HasColumnName("status");
             entity.Property(e => e.StatusPayment)
                 .HasMaxLength(20)
                 .HasColumnName("status_payment");

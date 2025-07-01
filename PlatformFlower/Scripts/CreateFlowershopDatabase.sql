@@ -124,12 +124,14 @@ CREATE TABLE Orders (
     user_voucher_status_id INT,
     address_id INT,
     cart_id INT,
-    status_payment NVARCHAR(20),
+    status NVARCHAR(20) DEFAULT 'pending',  -- Trạng thái xử lý đơn hàng
+    status_payment NVARCHAR(20),  -- Trạng thái thanh toán
     total_price DECIMAL(10, 2),  -- Tổng giá trị của đơn hàng
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
     FOREIGN KEY (user_voucher_status_id) REFERENCES User_Voucher_Status(user_voucher_status_id),
     FOREIGN KEY (address_id) REFERENCES Address(address_id),
-    FOREIGN KEY (cart_id) REFERENCES Cart(cart_id)
+    FOREIGN KEY (cart_id) REFERENCES Cart(cart_id),
+    CONSTRAINT chk_order_status CHECK (status IN ('pending', 'accepted', 'pending delivery', 'delivered', 'canceled'))
 );
 GO
 
