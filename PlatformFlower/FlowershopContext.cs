@@ -174,6 +174,9 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.StatusPayment)
                 .HasMaxLength(20)
                 .HasColumnName("status_payment");
+            entity.Property(e => e.ShippingFee)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("shipping_fee");
             entity.Property(e => e.TotalPrice)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("total_price");

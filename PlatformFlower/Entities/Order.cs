@@ -27,6 +27,8 @@ public partial class Order
 
     public string? StatusPayment { get; set; }
 
+    public decimal? ShippingFee { get; set; }
+
     public decimal? TotalPrice { get; set; }
 
     public virtual Address? Address { get; set; }
