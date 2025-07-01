@@ -32,6 +32,9 @@ namespace PlatformFlower.Services.Payment.VNPay
                 var tmnCode = vnpayConfig["TmnCode"];
                 var hashSecret = vnpayConfig["HashSecret"];
 
+                // Tạo unique transaction reference để tránh trùng lặp với VNPay
+                var uniqueTxnRef = $"{request.OrderId}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N")[..8]}";
+
                 var vnpParams = new SortedList<string, string>
                 {
                     {"vnp_Version", "2.1.0"},
@@ -45,7 +48,7 @@ namespace PlatformFlower.Services.Payment.VNPay
                     {"vnp_OrderInfo", request.OrderInfo},
                     {"vnp_OrderType", "other"},
                     {"vnp_ReturnUrl", request.ReturnUrl},
-                    {"vnp_TxnRef", request.OrderId.ToString()}
+                    {"vnp_TxnRef", uniqueTxnRef}
                 };
 
                 var hashData = new StringBuilder();
@@ -163,7 +166,14 @@ namespace PlatformFlower.Services.Payment.VNPay
                     return "Invalid signature";
                 }
 
-                var orderId = int.Parse(returnRequest.vnp_TxnRef);
+                // Extract OrderId từ vnp_TxnRef format: "OrderId_timestamp_guid"
+                var txnRefParts = returnRequest.vnp_TxnRef.Split('_');
+                if (txnRefParts.Length < 1 || !int.TryParse(txnRefParts[0], out int orderId))
+                {
+                    _logger.LogWarning($"Invalid vnp_TxnRef format: {returnRequest.vnp_TxnRef}");
+                    return "Invalid transaction reference";
+                }
+
                 var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
 
                 if (order == null)
@@ -220,3 +230,4 @@ namespace PlatformFlower.Services.Payment.VNPay
         }
     }
 }
+
