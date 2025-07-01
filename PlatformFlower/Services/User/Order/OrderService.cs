@@ -13,7 +13,6 @@ namespace PlatformFlower.Services.User.Order
         private readonly IAppLogger _logger;
         private readonly IVNPayService _vnPayService;
         private readonly IConfiguration _configuration;
-        private const decimal SHIPPING_FEE = 30000m;
 
         public OrderService(
             FlowershopContext context,
@@ -96,7 +95,13 @@ namespace PlatformFlower.Services.User.Order
                     }
                 }
 
-                var totalPrice = subTotal + SHIPPING_FEE - voucherDiscountAmount;
+                // Validate shipping fee (must be positive)
+                if (request.ShippingFee < 0)
+                {
+                    throw new ArgumentException("Shipping fee must be positive");
+                }
+
+                var totalPrice = subTotal + request.ShippingFee - voucherDiscountAmount;
 
                 var order = new Entities.Order
                 {
@@ -109,6 +114,7 @@ namespace PlatformFlower.Services.User.Order
                     AddressId = request.AddressId,
                     Status = "pending",
                     StatusPayment = "pending",
+                    ShippingFee = request.ShippingFee,
                     TotalPrice = totalPrice
                 };
 
@@ -165,20 +171,29 @@ namespace PlatformFlower.Services.User.Order
 
                 // NOTE: Cart is NOT cleared here - it will be cleared after successful payment confirmation
 
-                var vnpayRequest = new VNPayRequest
-                {
-                    OrderId = order.OrderId,
-                    Amount = totalPrice,
-                    OrderInfo = $"Thanh toan don hang #{order.OrderId}",
-                    ReturnUrl = _configuration.GetSection("VNPay")["ReturnUrl"]!
-                };
-
-                var vnpayResponse = await _vnPayService.CreatePaymentUrlAsync(vnpayRequest);
-
                 await transaction.CommitAsync();
 
                 var response = await MapToOrderResponse(order);
-                response.PaymentUrl = vnpayResponse.PaymentUrl;
+
+                // Only create VNPay URL if payment method is VNPay
+                if (request.PaymentMethod.ToLower() == "vnpay")
+                {
+                    var vnpayRequest = new VNPayRequest
+                    {
+                        OrderId = order.OrderId,
+                        Amount = totalPrice,
+                        OrderInfo = $"Thanh toan don hang #{order.OrderId}",
+                        ReturnUrl = _configuration.GetSection("VNPay")["ReturnUrl"]!
+                    };
+
+                    var vnpayResponse = await _vnPayService.CreatePaymentUrlAsync(vnpayRequest);
+                    response.PaymentUrl = vnpayResponse.PaymentUrl;
+                }
+                else
+                {
+                    // For COD, no payment URL needed
+                    response.PaymentUrl = null;
+                }
 
                 _logger.LogInformation($"Order {order.OrderId} created successfully for user {userId}");
 
@@ -267,7 +282,7 @@ namespace PlatformFlower.Services.User.Order
                 AddressDescription = order.Address?.Description,
                 StatusPayment = order.StatusPayment ?? "pending",
                 SubTotal = subTotal,
-                ShippingFee = SHIPPING_FEE,
+                ShippingFee = order.ShippingFee ?? 30000m,
                 VoucherDiscountAmount = voucherDiscountAmount,
                 TotalPrice = order.TotalPrice ?? 0,
                 Items = order.OrdersDetails?.Select(od => new OrderItemResponse
@@ -661,7 +676,7 @@ namespace PlatformFlower.Services.User.Order
                 Status = orderStatus, // Order details status
                 StatusPayment = order.StatusPayment ?? "pending", // Payment status
                 SubTotal = subTotal,
-                ShippingFee = SHIPPING_FEE,
+                ShippingFee = order.ShippingFee ?? 30000m,
                 VoucherDiscountAmount = voucherDiscountAmount,
                 TotalPrice = order.TotalPrice ?? 0,
                 Items = order.OrdersDetails?.Select(od => new AdminOrderItemResponse
