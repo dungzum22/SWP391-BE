@@ -66,6 +66,11 @@ services:
       - VNPay__TmnCode=${VNPAY_TMN_CODE}
       - VNPay__HashSecret=${VNPAY_HASH_SECRET}
       - VNPay__ReturnUrl=${VNPAY_RETURN_URL}
+      - Frontend__BaseUrl=${FRONTEND_BASE_URL}
+      - EmailSettings__SenderEmail=${EMAIL_SENDER_EMAIL}
+      - EmailSettings__SenderPassword=${EMAIL_SENDER_PASSWORD}
+      - EmailSettings__SmtpServer=${EMAIL_SMTP_SERVER}
+      - EmailSettings__Port=${EMAIL_PORT}
       - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
     ports:
       - "6784:8080"
