@@ -57,6 +57,18 @@ namespace PlatformFlower.Services.User.Auth
 
                 _logger.LogInformation($"User registered successfully: {user.Username}");
 
+                // Send welcome email to new user
+                try
+                {
+                    await _emailService.SendWelcomeEmailAsync(user.Email, user.Username);
+                    _logger.LogInformation($"Welcome email sent successfully to: {user.Email}");
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError($"Failed to send welcome email to {user.Email}: {emailEx.Message}", emailEx);
+                    // Don't throw here - registration should still succeed even if email fails
+                }
+
                 var token = GenerateJwtToken(user);
 
                 return new LoginResponse
