@@ -97,6 +97,7 @@ namespace PlatformFlower
             // Only 2 core services - no facade needed
             builder.Services.AddScoped<PlatformFlower.Services.User.Auth.IAuthService, PlatformFlower.Services.User.Auth.AuthServiceSimple>();
             builder.Services.AddScoped<PlatformFlower.Services.User.Profile.IProfileService, PlatformFlower.Services.User.Profile.ProfileServiceSimple>();
+            builder.Services.AddScoped<PlatformFlower.Services.User.Voucher.IUserVoucherService, PlatformFlower.Services.User.Voucher.UserVoucherService>();
             builder.Services.AddScoped<PlatformFlower.Services.Auth.IJwtService, PlatformFlower.Services.Auth.JwtService>();
 
             // Register Admin services
