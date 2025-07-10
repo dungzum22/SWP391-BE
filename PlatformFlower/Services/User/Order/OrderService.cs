@@ -151,11 +151,18 @@ namespace PlatformFlower.Services.User.Order
                 // Handle voucher usage
                 if (request.UserVoucherStatusId.HasValue)
                 {
+                    _logger.LogInformation($"Processing voucher usage for UserVoucherStatusId: {request.UserVoucherStatusId.Value}");
+
                     var voucherToUse = await _context.UserVoucherStatuses
                         .FirstOrDefaultAsync(v => v.UserVoucherStatusId == request.UserVoucherStatusId.Value);
 
                     if (voucherToUse != null && voucherToUse.Status == "active" && !voucherToUse.IsDeleted)
                     {
+                        _logger.LogInformation($"Voucher found - Code: {voucherToUse.VoucherCode}, Current UsageCount: {voucherToUse.UsageCount}, RemainingCount: {voucherToUse.RemainingCount}");
+
+                        var oldUsageCount = voucherToUse.UsageCount;
+                        var oldRemainingCount = voucherToUse.RemainingCount;
+
                         voucherToUse.UsageCount = (voucherToUse.UsageCount ?? 0) + 1;
                         if (voucherToUse.RemainingCount.HasValue)
                         {
@@ -164,8 +171,19 @@ namespace PlatformFlower.Services.User.Order
                             if (voucherToUse.RemainingCount.Value <= 0)
                             {
                                 voucherToUse.Status = "inactive";
+                                _logger.LogInformation($"Voucher {voucherToUse.VoucherCode} set to inactive - no remaining count");
                             }
                         }
+
+                        _logger.LogInformation($"Voucher updated - UsageCount: {oldUsageCount} -> {voucherToUse.UsageCount}, RemainingCount: {oldRemainingCount} -> {voucherToUse.RemainingCount}");
+
+                        // Save voucher changes
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation($"Voucher changes saved successfully");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Voucher not found or not usable - ID: {request.UserVoucherStatusId.Value}");
                     }
                 }
 
