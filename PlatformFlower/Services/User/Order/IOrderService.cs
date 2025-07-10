@@ -8,6 +8,7 @@ namespace PlatformFlower.Services.User.Order
         Task<OrderResponse?> GetOrderByIdAsync(int orderId, int userId);
         Task<List<OrderResponse>> GetUserOrdersAsync(int userId);
         Task<bool> UpdateOrderStatusAsync(int orderId, string status);
+        Task<bool> RestoreVoucherAsync(int orderId);
 
         // Admin methods
         Task<List<AdminOrderResponse>> GetAllOrdersAsync(AdminOrderListRequest request);

@@ -189,6 +189,41 @@ namespace PlatformFlower.Services.Payment.VNPay
                     order.StatusPayment = "paid";
                     _logger.LogInformation($"Order {orderId} payment successful");
 
+                    // Process voucher deduction for VNPay orders after successful payment
+                    if (order.UserVoucherStatusId.HasValue)
+                    {
+                        _logger.LogInformation($"Processing voucher deduction for successful VNPay payment - Order: {orderId}, Voucher: {order.UserVoucherStatusId.Value}");
+
+                        var voucherToUse = await _context.UserVoucherStatuses
+                            .FirstOrDefaultAsync(v => v.UserVoucherStatusId == order.UserVoucherStatusId.Value);
+
+                        if (voucherToUse != null && voucherToUse.Status == "active" && !voucherToUse.IsDeleted)
+                        {
+                            _logger.LogInformation($"VNPay voucher found - Code: {voucherToUse.VoucherCode}, Current UsageCount: {voucherToUse.UsageCount}, RemainingCount: {voucherToUse.RemainingCount}");
+
+                            var oldUsageCount = voucherToUse.UsageCount;
+                            var oldRemainingCount = voucherToUse.RemainingCount;
+
+                            voucherToUse.UsageCount = (voucherToUse.UsageCount ?? 0) + 1;
+                            if (voucherToUse.RemainingCount.HasValue)
+                            {
+                                voucherToUse.RemainingCount = voucherToUse.RemainingCount.Value - 1;
+
+                                if (voucherToUse.RemainingCount.Value <= 0)
+                                {
+                                    voucherToUse.Status = "inactive";
+                                    _logger.LogInformation($"VNPay voucher {voucherToUse.VoucherCode} set to inactive - no remaining count");
+                                }
+                            }
+
+                            _logger.LogInformation($"VNPay voucher updated - UsageCount: {oldUsageCount} -> {voucherToUse.UsageCount}, RemainingCount: {oldRemainingCount} -> {voucherToUse.RemainingCount}");
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"VNPay voucher not found or not usable - ID: {order.UserVoucherStatusId.Value}");
+                        }
+                    }
+
                     // Clear cart only after successful payment
                     if (order.UserId.HasValue)
                     {

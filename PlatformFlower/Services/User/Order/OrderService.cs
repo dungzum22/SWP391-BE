@@ -148,10 +148,11 @@ namespace PlatformFlower.Services.User.Order
 
                 await _context.SaveChangesAsync();
 
-                // Handle voucher usage
-                if (request.UserVoucherStatusId.HasValue)
+                // Handle voucher usage - only for COD orders
+                // VNPay orders will have voucher deducted after successful payment
+                if (request.UserVoucherStatusId.HasValue && request.PaymentMethod.ToLower() == "cod")
                 {
-                    _logger.LogInformation($"Processing voucher usage for UserVoucherStatusId: {request.UserVoucherStatusId.Value}");
+                    _logger.LogInformation($"Processing voucher usage for COD order - UserVoucherStatusId: {request.UserVoucherStatusId.Value}");
 
                     var voucherToUse = await _context.UserVoucherStatuses
                         .FirstOrDefaultAsync(v => v.UserVoucherStatusId == request.UserVoucherStatusId.Value);
@@ -175,16 +176,20 @@ namespace PlatformFlower.Services.User.Order
                             }
                         }
 
-                        _logger.LogInformation($"Voucher updated - UsageCount: {oldUsageCount} -> {voucherToUse.UsageCount}, RemainingCount: {oldRemainingCount} -> {voucherToUse.RemainingCount}");
+                        _logger.LogInformation($"COD voucher updated - UsageCount: {oldUsageCount} -> {voucherToUse.UsageCount}, RemainingCount: {oldRemainingCount} -> {voucherToUse.RemainingCount}");
 
                         // Save voucher changes
                         await _context.SaveChangesAsync();
-                        _logger.LogInformation($"Voucher changes saved successfully");
+                        _logger.LogInformation($"COD voucher changes saved successfully");
                     }
                     else
                     {
-                        _logger.LogWarning($"Voucher not found or not usable - ID: {request.UserVoucherStatusId.Value}");
+                        _logger.LogWarning($"Voucher not found or not usable for COD order - ID: {request.UserVoucherStatusId.Value}");
                     }
+                }
+                else if (request.UserVoucherStatusId.HasValue && request.PaymentMethod.ToLower() == "vnpay")
+                {
+                    _logger.LogInformation($"VNPay order created with voucher {request.UserVoucherStatusId.Value} - voucher will be deducted after successful payment");
                 }
 
                 // NOTE: Cart is NOT cleared here - it will be cleared after successful payment confirmation
@@ -262,8 +267,16 @@ namespace PlatformFlower.Services.User.Order
                 var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
                 if (order == null) return false;
 
+                var oldStatus = order.StatusPayment;
                 order.StatusPayment = status;
                 await _context.SaveChangesAsync();
+
+                // Restore voucher if order is cancelled
+                if (status.ToLower() == "cancelled" && oldStatus != "cancelled")
+                {
+                    _logger.LogInformation($"Order {orderId} cancelled, attempting to restore voucher");
+                    await RestoreVoucherAsync(orderId);
+                }
 
                 _logger.LogInformation($"Order {orderId} status updated to {status}");
                 return true;
@@ -520,6 +533,13 @@ namespace PlatformFlower.Services.User.Order
 
                 await _context.SaveChangesAsync();
 
+                // Restore voucher if order is cancelled
+                if (request.Status.ToLower() == "canceled" && oldOrderStatus.ToLower() != "canceled")
+                {
+                    _logger.LogInformation($"Admin cancelled order {orderId}, attempting to restore voucher");
+                    await RestoreVoucherAsync(orderId);
+                }
+
                 _logger.LogInformation($"Order {orderId} status updated from '{oldOrderStatus}' to '{request.Status}'. " +
                                      $"Payment status: '{oldPaymentStatus}' to '{order.StatusPayment}'. " +
                                      $"Updated {order.OrdersDetails.Count} order details.");
@@ -768,6 +788,73 @@ namespace PlatformFlower.Services.User.Order
             {
                 _logger.LogError($"Error getting order count: {ex.Message}", ex);
                 throw;
+            }
+        }
+
+        public async Task<bool> RestoreVoucherAsync(int orderId)
+        {
+            try
+            {
+                _logger.LogInformation($"Attempting to restore voucher for cancelled order {orderId}");
+
+                var order = await _context.Orders
+                    .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+                if (order == null)
+                {
+                    _logger.LogWarning($"Order {orderId} not found for voucher restoration");
+                    return false;
+                }
+
+                if (!order.UserVoucherStatusId.HasValue)
+                {
+                    _logger.LogInformation($"Order {orderId} has no voucher to restore");
+                    return true; // No voucher to restore, consider it successful
+                }
+
+                var voucher = await _context.UserVoucherStatuses
+                    .FirstOrDefaultAsync(v => v.UserVoucherStatusId == order.UserVoucherStatusId.Value);
+
+                if (voucher == null)
+                {
+                    _logger.LogWarning($"Voucher {order.UserVoucherStatusId.Value} not found for restoration");
+                    return false;
+                }
+
+                _logger.LogInformation($"Restoring voucher - Code: {voucher.VoucherCode}, Current UsageCount: {voucher.UsageCount}, RemainingCount: {voucher.RemainingCount}");
+
+                var oldUsageCount = voucher.UsageCount;
+                var oldRemainingCount = voucher.RemainingCount;
+
+                // Restore voucher usage
+                if (voucher.UsageCount > 0)
+                {
+                    voucher.UsageCount = voucher.UsageCount.Value - 1;
+                }
+
+                if (voucher.RemainingCount.HasValue)
+                {
+                    voucher.RemainingCount = voucher.RemainingCount.Value + 1;
+                }
+
+                // Reactivate voucher if it was inactive due to no remaining count
+                if (voucher.Status == "inactive" && voucher.RemainingCount > 0)
+                {
+                    voucher.Status = "active";
+                    _logger.LogInformation($"Voucher {voucher.VoucherCode} reactivated due to restored remaining count");
+                }
+
+                _logger.LogInformation($"Voucher restored - UsageCount: {oldUsageCount} -> {voucher.UsageCount}, RemainingCount: {oldRemainingCount} -> {voucher.RemainingCount}");
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Voucher restoration completed for order {orderId}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error restoring voucher for order {orderId}: {ex.Message}", ex);
+                return false;
             }
         }
     }
