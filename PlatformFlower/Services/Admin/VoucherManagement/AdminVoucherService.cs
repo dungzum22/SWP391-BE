@@ -217,9 +217,9 @@ namespace PlatformFlower.Services.Admin.VoucherManagement
         {
             _logger.LogInformation($"Creating voucher with code: {request.VoucherCode}");
 
-            var activeUsers = await _context.UserInfos
-                .Include(ui => ui.User)
-                .Where(ui => ui.User!.Status == "active" && ui.User.Type == "user")
+            // Get all active users
+            var activeUsers = await _context.Users
+                .Where(u => u.Status == "active" && u.Type == "user")
                 .ToListAsync();
 
             if (!activeUsers.Any())
@@ -227,9 +227,32 @@ namespace PlatformFlower.Services.Admin.VoucherManagement
                 throw new InvalidOperationException("No active users found to create vouchers for");
             }
 
+            // Get or create UserInfo for each active user
+            var userInfos = new List<Entities.UserInfo>();
+            foreach (var user in activeUsers)
+            {
+                var userInfo = await _context.UserInfos
+                    .FirstOrDefaultAsync(ui => ui.UserId == user.UserId);
+
+                if (userInfo == null)
+                {
+                    // Create UserInfo if it doesn't exist
+                    userInfo = new Entities.UserInfo
+                    {
+                        UserId = user.UserId,
+                        CreatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.UtcNow
+                    };
+                    _context.UserInfos.Add(userInfo);
+                    await _context.SaveChangesAsync(); // Save to get UserInfoId
+                    _logger.LogInformation($"Created UserInfo for user {user.UserId} during voucher creation");
+                }
+                userInfos.Add(userInfo);
+            }
+
             var createdVouchers = new List<Entities.UserVoucherStatus>();
 
-            foreach (var user in activeUsers)
+            foreach (var userInfo in userInfos)
             {
                 var voucher = new Entities.UserVoucherStatus
                 {
@@ -244,7 +267,7 @@ namespace PlatformFlower.Services.Admin.VoucherManagement
                     CreatedAt = DateTime.Now,
                     Status = request.Status ?? "active",
                     IsDeleted = false,
-                    UserInfoId = user.UserInfoId
+                    UserInfoId = userInfo.UserInfoId
                 };
 
                 createdVouchers.Add(voucher);

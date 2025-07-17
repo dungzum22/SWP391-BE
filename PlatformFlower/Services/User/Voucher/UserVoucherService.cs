@@ -24,14 +24,24 @@ namespace PlatformFlower.Services.User.Voucher
             {
                 _logger.LogInformation($"Getting vouchers for user {userId}");
 
+                // First get the UserInfoId from Users.user_id
+                var userInfo = await _context.UserInfos
+                    .FirstOrDefaultAsync(ui => ui.UserId == userId);
+
+                if (userInfo == null)
+                {
+                    _logger.LogWarning($"UserInfo not found for user {userId}");
+                    return new List<VoucherResponse>();
+                }
+
                 var vouchers = await _context.UserVoucherStatuses
-                    .Where(v => v.UserInfoId == userId && !v.IsDeleted)
+                    .Where(v => v.UserInfoId == userInfo.UserInfoId && !v.IsDeleted)
                     .OrderByDescending(v => v.CreatedAt)
                     .ToListAsync();
 
                 var result = vouchers.Select(MapToVoucherResponse).ToList();
 
-                _logger.LogInformation($"Retrieved {result.Count} vouchers for user {userId}");
+                _logger.LogInformation($"Retrieved {result.Count} vouchers for user {userId} (UserInfoId: {userInfo.UserInfoId})");
                 return result;
             }
             catch (Exception ex)
@@ -47,19 +57,29 @@ namespace PlatformFlower.Services.User.Voucher
             {
                 _logger.LogInformation($"Validating voucher code '{voucherCode}' for user {userId}");
 
+                // First get the UserInfoId from Users.user_id
+                var userInfo = await _context.UserInfos
+                    .FirstOrDefaultAsync(ui => ui.UserId == userId);
+
+                if (userInfo == null)
+                {
+                    _logger.LogWarning($"UserInfo not found for user {userId}");
+                    return null;
+                }
+
                 var voucher = await _context.UserVoucherStatuses
-                    .FirstOrDefaultAsync(v => v.VoucherCode == voucherCode 
-                                            && v.UserInfoId == userId 
+                    .FirstOrDefaultAsync(v => v.VoucherCode == voucherCode
+                                            && v.UserInfoId == userInfo.UserInfoId
                                             && !v.IsDeleted);
 
                 if (voucher == null)
                 {
-                    _logger.LogWarning($"Voucher code '{voucherCode}' not found for user {userId}");
+                    _logger.LogWarning($"Voucher code '{voucherCode}' not found for user {userId} (UserInfoId: {userInfo.UserInfoId})");
                     return null;
                 }
 
                 var result = MapToVoucherResponse(voucher);
-                
+
                 _logger.LogInformation($"Voucher validation result for '{voucherCode}': IsActive={result.IsActive}, IsExpired={result.IsExpired}");
                 return result;
             }
@@ -76,19 +96,29 @@ namespace PlatformFlower.Services.User.Voucher
             {
                 _logger.LogInformation($"Getting voucher {userVoucherStatusId} for user {userId}");
 
+                // First get the UserInfoId from Users.user_id
+                var userInfo = await _context.UserInfos
+                    .FirstOrDefaultAsync(ui => ui.UserId == userId);
+
+                if (userInfo == null)
+                {
+                    _logger.LogWarning($"UserInfo not found for user {userId}");
+                    return null;
+                }
+
                 var voucher = await _context.UserVoucherStatuses
-                    .FirstOrDefaultAsync(v => v.UserVoucherStatusId == userVoucherStatusId 
-                                            && v.UserInfoId == userId 
+                    .FirstOrDefaultAsync(v => v.UserVoucherStatusId == userVoucherStatusId
+                                            && v.UserInfoId == userInfo.UserInfoId
                                             && !v.IsDeleted);
 
                 if (voucher == null)
                 {
-                    _logger.LogWarning($"Voucher {userVoucherStatusId} not found for user {userId}");
+                    _logger.LogWarning($"Voucher {userVoucherStatusId} not found for user {userId} (UserInfoId: {userInfo.UserInfoId})");
                     return null;
                 }
 
                 var result = MapToVoucherResponse(voucher);
-                _logger.LogInformation($"Successfully retrieved voucher {userVoucherStatusId} for user {userId}");
+                _logger.LogInformation($"Successfully retrieved voucher {userVoucherStatusId} for user {userId} (UserInfoId: {userInfo.UserInfoId})");
                 return result;
             }
             catch (Exception ex)
