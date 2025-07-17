@@ -55,6 +55,16 @@ namespace PlatformFlower.Services.User.Auth
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
+                // Create UserInfo record for the new user
+                var userInfo = new Entities.UserInfo
+                {
+                    UserId = user.UserId,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                };
+                _context.UserInfos.Add(userInfo);
+                await _context.SaveChangesAsync();
+
                 _logger.LogInformation($"User registered successfully: {user.Username}");
 
                 // Send welcome email to new user
@@ -73,7 +83,7 @@ namespace PlatformFlower.Services.User.Auth
 
                 return new LoginResponse
                 {
-                    User = MapToUserResponse(user, null),
+                    User = MapToUserResponse(user, userInfo),
                     Token = token,
                     TokenType = "Bearer",
                     ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtConfig.ExpirationMinutes),
